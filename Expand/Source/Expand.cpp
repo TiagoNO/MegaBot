@@ -1,4 +1,4 @@
-#include "ExampleAIModule.h"
+#include "Expand.h"
 #include <math.h>
 using namespace BWAPI;
 
@@ -276,7 +276,7 @@ bool achou;
 bool Posicao;
 int lastFrame;
 
-void ExampleAIModule::onStart()
+void Expand::onStart()
 {
   NumBases = 1;
   Bases = InicializaBase();
@@ -378,7 +378,7 @@ void ExampleAIModule::onStart()
   }
 }
 
-void ExampleAIModule::onEnd(bool isWinner)
+void Expand::onEnd(bool isWinner)
 {
   if (isWinner)
   {
@@ -386,7 +386,7 @@ void ExampleAIModule::onEnd(bool isWinner)
   }
 }
 
-void ExampleAIModule::onFrame()
+void Expand::onFrame()
 {
   //ImprimirBases(Bases);
   //localMineral = PesquisarNovaBase();
@@ -627,7 +627,7 @@ void ExampleAIModule::onFrame()
   }
 }
 
-void ExampleAIModule::onSendText(std::string text)
+void Expand::onSendText(std::string text)
 {
   if (text=="/show bullets")
   {
@@ -655,17 +655,17 @@ void ExampleAIModule::onSendText(std::string text)
   }
 }
 
-void ExampleAIModule::onReceiveText(BWAPI::Player* player, std::string text)
+void Expand::onReceiveText(BWAPI::Player* player, std::string text)
 {
   Broodwar->printf("%s said '%s'", player->getName().c_str(), text.c_str());
 }
 
-void ExampleAIModule::onPlayerLeft(BWAPI::Player* player)
+void Expand::onPlayerLeft(BWAPI::Player* player)
 {
   Broodwar->sendText("%s left the game.",player->getName().c_str());
 }
 
-void ExampleAIModule::onNukeDetect(BWAPI::Position target)
+void Expand::onNukeDetect(BWAPI::Position target)
 {
   if (target!=Positions::Unknown)
     Broodwar->printf("Nuclear Launch Detected at (%d,%d)",target.x(),target.y());
@@ -673,7 +673,7 @@ void ExampleAIModule::onNukeDetect(BWAPI::Position target)
     Broodwar->printf("Nuclear Launch Detected");
 }
 
-void ExampleAIModule::onUnitDiscover(BWAPI::Unit* unit)
+void Expand::onUnitDiscover(BWAPI::Unit* unit)
 {
   if (!Broodwar->isReplay() && Broodwar->getFrameCount()>1)
   {
@@ -699,26 +699,26 @@ void ExampleAIModule::onUnitDiscover(BWAPI::Unit* unit)
   }
 }
 
-void ExampleAIModule::onUnitEvade(BWAPI::Unit* unit)
+void Expand::onUnitEvade(BWAPI::Unit* unit)
 {
   if (!Broodwar->isReplay() && Broodwar->getFrameCount()>1)
     Broodwar->sendText("A %s [%x] was last accessible at (%d,%d)",unit->getType().getName().c_str(),unit,unit->getPosition().x(),unit->getPosition().y());
 }
 
-void ExampleAIModule::onUnitShow(BWAPI::Unit* unit)
+void Expand::onUnitShow(BWAPI::Unit* unit)
 {
   if (!Broodwar->isReplay() && Broodwar->getFrameCount()>1)
     Broodwar->sendText("A %s [%x] has been spotted at (%d,%d)",unit->getType().getName().c_str(),unit,unit->getPosition().x(),unit->getPosition().y());
   Broodwar->sendText("oi");
 }
 
-void ExampleAIModule::onUnitHide(BWAPI::Unit* unit)
+void Expand::onUnitHide(BWAPI::Unit* unit)
 {
  // if (!Broodwar->isReplay() && Broodwar->getFrameCount()>1)
     //Broodwar->sendText("A %s [%x] was last seen at (%d,%d)",unit->getType().getName().c_str(),unit,unit->getPosition().x(),unit->getPosition().y());
 }
 
-void ExampleAIModule::onUnitCreate(BWAPI::Unit* unit)
+void Expand::onUnitCreate(BWAPI::Unit* unit)
 {
   if (Broodwar->getFrameCount()>1)
   {
@@ -743,13 +743,13 @@ void ExampleAIModule::onUnitCreate(BWAPI::Unit* unit)
   }
 }
 
-void ExampleAIModule::onUnitDestroy(BWAPI::Unit* unit)
+void Expand::onUnitDestroy(BWAPI::Unit* unit)
 {
   if (!Broodwar->isReplay() && Broodwar->getFrameCount()>1)
     Broodwar->sendText("A %s [%x] has been destroyed at (%d,%d)",unit->getType().getName().c_str(),unit,unit->getPosition().x(),unit->getPosition().y());
 }
 
-void ExampleAIModule::onUnitMorph(BWAPI::Unit* unit)
+void Expand::onUnitMorph(BWAPI::Unit* unit)
 {
   if (!Broodwar->isReplay())
     Broodwar->sendText("A %s [%x] has been morphed at (%d,%d)",unit->getType().getName().c_str(),unit,unit->getPosition().x(),unit->getPosition().y());
@@ -767,13 +767,13 @@ void ExampleAIModule::onUnitMorph(BWAPI::Unit* unit)
   }
 }
 
-void ExampleAIModule::onUnitRenegade(BWAPI::Unit* unit)
+void Expand::onUnitRenegade(BWAPI::Unit* unit)
 {
   if (!Broodwar->isReplay())
     Broodwar->sendText("A %s [%x] is now owned by %s",unit->getType().getName().c_str(),unit,unit->getPlayer()->getName().c_str());
 }
 
-void ExampleAIModule::onSaveGame(std::string gameName)
+void Expand::onSaveGame(std::string gameName)
 {
   Broodwar->printf("The game was saved to \"%s\".", gameName.c_str());
 }
@@ -797,7 +797,7 @@ DWORD WINAPI AnalyzeThread()
   return 0;
 }
 
-void ExampleAIModule::drawStats()
+void Expand::drawStats()
 {
   std::set<Unit*> myUnits = Broodwar->self()->getUnits();
   Broodwar->drawTextScreen(5,0,"I have %d units:",myUnits.size());
@@ -818,7 +818,7 @@ void ExampleAIModule::drawStats()
   }
 }
 
-void ExampleAIModule::drawBullets()
+void Expand::drawBullets()
 {
   std::set<Bullet*> bullets = Broodwar->getBullets();
   for(std::set<Bullet*>::iterator i=bullets.begin();i!=bullets.end();i++)
@@ -839,7 +839,7 @@ void ExampleAIModule::drawBullets()
   }
 }
 
-void ExampleAIModule::drawVisibilityData()
+void Expand::drawVisibilityData()
 {
   for(int x=0;x<Broodwar->mapWidth();x++)
   {
@@ -858,7 +858,7 @@ void ExampleAIModule::drawVisibilityData()
   }
 }
 
-void ExampleAIModule::drawTerrainData()
+void Expand::drawTerrainData()
 {
   //we will iterate through all the base locations, and draw their outlines.
   for(std::set<BWTA::BaseLocation*>::const_iterator i=BWTA::getBaseLocations().begin();i!=BWTA::getBaseLocations().end();i++)
@@ -912,7 +912,7 @@ void ExampleAIModule::drawTerrainData()
   }
 }
 
-void ExampleAIModule::showPlayers()
+void Expand::showPlayers()
 {
   std::set<Player*> players=Broodwar->getPlayers();
   for(std::set<Player*>::iterator i=players.begin();i!=players.end();i++)
@@ -921,7 +921,7 @@ void ExampleAIModule::showPlayers()
   }
 }
 
-void ExampleAIModule::showForces()
+void Expand::showForces()
 {
   std::set<Force*> forces=Broodwar->getForces();
   for(std::set<Force*>::iterator i=forces.begin();i!=forces.end();i++)
@@ -935,7 +935,7 @@ void ExampleAIModule::showForces()
   }
 }
 
-void ExampleAIModule::onUnitComplete(BWAPI::Unit *unit)
+void Expand::onUnitComplete(BWAPI::Unit *unit)
 {
   if (!Broodwar->isReplay() && Broodwar->getFrameCount()>1)
     Broodwar->sendText("A %s [%x] has been completed at (%d,%d)",unit->getType().getName().c_str(),unit,unit->getPosition().x(),unit->getPosition().y());

@@ -10,7 +10,7 @@ extern BWTA::Region* home;
 extern BWTA::Region* enemy_base;
 DWORD WINAPI AnalyzeThread();
 
-class ExampleAIModule : public BWAPI::AIModule
+class Expand : public BWAPI::AIModule
 {
 public:
   virtual void onStart();
