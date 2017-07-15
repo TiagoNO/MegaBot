@@ -260,10 +260,10 @@ void BalancearBases(Celula *Bases)
 }
 
 
-bool analyzed;
-bool analysis_just_finished;
-BWTA::Region* home;
-BWTA::Region* enemy_base;
+bool hasAnalysed;
+bool analysisJustFinished;
+BWTA::Region* baseHome;
+BWTA::Region* enemyBase;
 int NumBases;
 Celula *Bases;
 int IdExplorador = -1;
@@ -299,8 +299,8 @@ void Expand::onStart()
 
   //read map information into BWTA so terrain analysis can be done in another thread
   BWTA::readMap();
-  analyzed=false;
-  analysis_just_finished=false;
+  hasAnalysed=false;
+  analysisJustFinished=false;
 
   show_bullets=false;
   show_visibility_data=false;
@@ -400,15 +400,15 @@ void Expand::onFrame()
     return;
 
   drawStats();
-  if (analyzed && Broodwar->getFrameCount()%30==0)
+  if (hasAnalysed && Broodwar->getFrameCount()%30==0)
   {
     //order one of our workers to guard our chokepoint.
     for(std::set<Unit*>::const_iterator i=Broodwar->self()->getUnits().begin();i!=Broodwar->self()->getUnits().end();i++)
     {
       if ((*i)->getType().isWorker())
       {
-		  //get the chokepoints linked to our home region
-        std::set<BWTA::Chokepoint*> chokepoints= home->getChokepoints();
+		  //get the chokepoints linked to our baseHome region
+        std::set<BWTA::Chokepoint*> chokepoints= baseHome->getChokepoints();
         double min_length=10000;
         BWTA::Chokepoint* choke=NULL;
 
@@ -428,13 +428,13 @@ void Expand::onFrame()
       }
     }
   }
-  if (analyzed)
+  if (hasAnalysed)
     drawTerrainData();
 
-  if (analysis_just_finished)
+  if (analysisJustFinished)
   {
     Broodwar->printf("Finished analyzing map.");
-    analysis_just_finished=false;
+    analysisJustFinished=false;
   }
   //ImprimirBases(Bases);
   for(std::set<Unit*>::const_iterator i=Broodwar->self()->getUnits().begin();i!=Broodwar->self()->getUnits().end();i++)
@@ -643,10 +643,10 @@ void Expand::onSendText(std::string text)
     show_visibility_data=!show_visibility_data;
   } else if (text=="/analyze")
   {
-    if (analyzed == false)
+    if (hasAnalysed == false)
     {
       Broodwar->printf("Analyzing map... this may take a minute");
-      CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)AnalyzeThread, NULL, 0, NULL);
+      CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)BWTA_AnalyzeThread, NULL, 0, NULL);
     }
   } else
   {
@@ -778,22 +778,22 @@ void Expand::onSaveGame(std::string gameName)
   Broodwar->printf("The game was saved to \"%s\".", gameName.c_str());
 }
 
-DWORD WINAPI AnalyzeThread()
+DWORD WINAPI BWTA_AnalyzeThread()
 {
   BWTA::analyze();
 
   //self start location only available if the map has base locations
   if (BWTA::getStartLocation(BWAPI::Broodwar->self())!=NULL)
   {
-    home       = BWTA::getStartLocation(BWAPI::Broodwar->self())->getRegion();
+    baseHome       = BWTA::getStartLocation(BWAPI::Broodwar->self())->getRegion();
   }
   //enemy start location only available if Complete Map Information is enabled.
   if (BWTA::getStartLocation(BWAPI::Broodwar->enemy())!=NULL)
   {
-    enemy_base = BWTA::getStartLocation(BWAPI::Broodwar->enemy())->getRegion();
+    enemyBase = BWTA::getStartLocation(BWAPI::Broodwar->enemy())->getRegion();
   }
-  analyzed   = true;
-  analysis_just_finished = true;
+  hasAnalysed   = true;
+  analysisJustFinished = true;
   return 0;
 }
 
