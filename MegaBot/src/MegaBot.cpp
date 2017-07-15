@@ -5,6 +5,7 @@
 #include <iterator>
 
 #include "MegaBot.h"
+#include "Explore.h"
 #include "Xelnaga.h"
 #include "Skynet.h"
 #include "NUSBotModule.h"

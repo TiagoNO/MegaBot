@@ -47,6 +47,8 @@ public:
 	static const string XELNAGA;	//"Xelnaga"
 	static const string NUSBot;		//"NUSBot"
 
+	static const string EXPLORE;	//"Explore"
+
 	/** Returns the meta strategy name */
 	string getName();
 

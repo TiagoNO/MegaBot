@@ -5,6 +5,7 @@
 #include <cfloat>
 #include "BWAPI.h"
 #include "MetaStrategy.h"
+#include "Explore.h"
 #include "Xelnaga.h"
 #include "Skynet.h"
 #include "NUSBotModule.h"
@@ -19,6 +20,7 @@
 
 
 //initializes consts
+const string MetaStrategy::EXPLORE = "Explore";
 const string MetaStrategy::SKYNET = "Skynet";
 const string MetaStrategy::XELNAGA = "Xelnaga";
 const string MetaStrategy::NUSBot = "NUSBot";
@@ -30,6 +32,7 @@ MetaStrategy::MetaStrategy() : rng(std::time(0)) {
     portfolio.insert(make_pair(SKYNET, new Skynet()));
     portfolio.insert(make_pair(XELNAGA, new Xelnaga()));
     portfolio.insert(make_pair(NUSBot, new NUSBotModule()));
+	portfolio.insert(make_pair(EXPLORE, new Explore()));
 
     //initializes reverse map
 	map<string, BWAPI::AIModule*>::iterator behv;
