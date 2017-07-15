@@ -48,6 +48,7 @@ public:
 	static const string NUSBot;		//"NUSBot"
 
 	static const string EXPLORE;	//"Explore"
+	static const string EXPAND;		//"Expand"
 
 	/** Returns the meta strategy name */
 	string getName();
