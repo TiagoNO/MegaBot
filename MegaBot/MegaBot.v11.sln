@@ -18,7 +18,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SparCraft", "..\NUSBot\NUSB
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "StarcraftBuildOrderSearch", "..\NUSBot\NUSBot\src\StarcraftBuildOrderSearch\VisualStudio\StarcraftBuildOrderSearch.vcxproj", "{9F8709E3-AC4F-45F2-8105-4A99D8E2A127}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Explore", "..\Exploracao\Explore-lib.vcxproj", "{AE836805-31C5-4C3C-B5B7-95D95E4A6C9A}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Explore-lib", "..\Explore\Explore-lib.vcxproj", "{AE836805-31C5-4C3C-B5B7-95D95E4A6C9A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

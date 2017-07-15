@@ -54,7 +54,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../include;..\XelNaga\AiurModule\Source;..\XelNaga\include;..\Skynet\Skynet;..\NUSBot\NUSBot\src\SparCraft\source;..\NUSBot\NUSBot\src\NUSBot\Source;$(BWAPI_DIR)/include;$(BOOST_DIR);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../include;../Explore/Source;..\XelNaga\AiurModule\Source;..\XelNaga\include;..\Skynet\Skynet;..\NUSBot\NUSBot\src\SparCraft\source;..\NUSBot\NUSBot\src\NUSBot\Source;$(BWAPI_DIR)/include;$(BOOST_DIR);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;SKYNET_EXPORTS;_DEBUG;_WINDOWS;_USRDLL;EXAMPLEAIMODULE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -76,7 +76,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>../include;..\XelNaga\AiurModule\Source;..\XelNaga\include;..\Skynet\Skynet;..\NUSBot\NUSBot\src\SparCraft\source;..\NUSBot\NUSBot\src\NUSBot\Source;$(BWAPI_DIR)/include;$(BOOST_DIR);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../include;../Explore/Source;..\XelNaga\AiurModule\Source;..\XelNaga\include;..\Skynet\Skynet;..\NUSBot\NUSBot\src\SparCraft\source;..\NUSBot\NUSBot\src\NUSBot\Source;$(BWAPI_DIR)/include;$(BOOST_DIR);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;SKYNET_EXPORTS;NDEBUG;_WINDOWS;_USRDLL;EXAMPLEAIMODULE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -141,6 +141,9 @@
     <ClInclude Include="src\utils\tinyxml2.h" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Explore\Explore-lib.vcxproj">
+      <Project>{ae836805-31c5-4c3c-b5b7-95d95e4a6c9a}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\NUSBot\NUSBot\src\NUSBot\VisualStudio\NUSBot-lib.vcxproj">
       <Project>{6c685b5e-324a-4f3c-a53c-2a800e1c7eb9}</Project>
     </ProjectReference>
