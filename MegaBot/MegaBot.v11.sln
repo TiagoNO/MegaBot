@@ -20,6 +20,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "StarcraftBuildOrderSearch",
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Explore-lib", "..\Explore\Explore-lib.vcxproj", "{AE836805-31C5-4C3C-B5B7-95D95E4A6C9A}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Expand-lib", "..\Expand\Expand-lib.vcxproj", "{1E26151F-8B11-49EC-A6E5-3D4712D901F7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Competition|Win32 = Competition|Win32
@@ -96,6 +98,15 @@ Global
 		{AE836805-31C5-4C3C-B5B7-95D95E4A6C9A}.Release|Win32.ActiveCfg = Release|Win32
 		{AE836805-31C5-4C3C-B5B7-95D95E4A6C9A}.Release|Win32.Build.0 = Release|Win32
 		{AE836805-31C5-4C3C-B5B7-95D95E4A6C9A}.Release|x64.ActiveCfg = Release|Win32
+		{1E26151F-8B11-49EC-A6E5-3D4712D901F7}.Competition|Win32.ActiveCfg = Release|Win32
+		{1E26151F-8B11-49EC-A6E5-3D4712D901F7}.Competition|Win32.Build.0 = Release|Win32
+		{1E26151F-8B11-49EC-A6E5-3D4712D901F7}.Competition|x64.ActiveCfg = Release|Win32
+		{1E26151F-8B11-49EC-A6E5-3D4712D901F7}.Debug|Win32.ActiveCfg = Debug|Win32
+		{1E26151F-8B11-49EC-A6E5-3D4712D901F7}.Debug|Win32.Build.0 = Debug|Win32
+		{1E26151F-8B11-49EC-A6E5-3D4712D901F7}.Debug|x64.ActiveCfg = Debug|Win32
+		{1E26151F-8B11-49EC-A6E5-3D4712D901F7}.Release|Win32.ActiveCfg = Release|Win32
+		{1E26151F-8B11-49EC-A6E5-3D4712D901F7}.Release|Win32.Build.0 = Release|Win32
+		{1E26151F-8B11-49EC-A6E5-3D4712D901F7}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
