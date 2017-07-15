@@ -1,5 +1,7 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Express 2012 for Windows Desktop
+# Visual Studio Express 2013 for Windows Desktop
+VisualStudioVersion = 12.0.31101.0
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MegaBot", "MegaBot.vcxproj", "{2E63AE74-758A-4607-9DE4-D28E814A6E13}"
 	ProjectSection(ProjectDependencies) = postProject
 		{6C685B5E-324A-4F3C-A53C-2A800E1C7EB9} = {6C685B5E-324A-4F3C-A53C-2A800E1C7EB9}
@@ -15,6 +17,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SparCraft", "..\NUSBot\NUSBot\src\SparCraft\VisualStudio\SparCraft.vcxproj", "{66236439-5968-4756-B2E7-8A29BEA99078}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "StarcraftBuildOrderSearch", "..\NUSBot\NUSBot\src\StarcraftBuildOrderSearch\VisualStudio\StarcraftBuildOrderSearch.vcxproj", "{9F8709E3-AC4F-45F2-8105-4A99D8E2A127}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Explore", "..\Exploracao\Explore-lib.vcxproj", "{AE836805-31C5-4C3C-B5B7-95D95E4A6C9A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -83,6 +87,15 @@ Global
 		{9F8709E3-AC4F-45F2-8105-4A99D8E2A127}.Release|Win32.ActiveCfg = Release|Win32
 		{9F8709E3-AC4F-45F2-8105-4A99D8E2A127}.Release|Win32.Build.0 = Release|Win32
 		{9F8709E3-AC4F-45F2-8105-4A99D8E2A127}.Release|x64.ActiveCfg = Release|Win32
+		{AE836805-31C5-4C3C-B5B7-95D95E4A6C9A}.Competition|Win32.ActiveCfg = Release|Win32
+		{AE836805-31C5-4C3C-B5B7-95D95E4A6C9A}.Competition|Win32.Build.0 = Release|Win32
+		{AE836805-31C5-4C3C-B5B7-95D95E4A6C9A}.Competition|x64.ActiveCfg = Release|Win32
+		{AE836805-31C5-4C3C-B5B7-95D95E4A6C9A}.Debug|Win32.ActiveCfg = Debug|Win32
+		{AE836805-31C5-4C3C-B5B7-95D95E4A6C9A}.Debug|Win32.Build.0 = Debug|Win32
+		{AE836805-31C5-4C3C-B5B7-95D95E4A6C9A}.Debug|x64.ActiveCfg = Debug|Win32
+		{AE836805-31C5-4C3C-B5B7-95D95E4A6C9A}.Release|Win32.ActiveCfg = Release|Win32
+		{AE836805-31C5-4C3C-B5B7-95D95E4A6C9A}.Release|Win32.Build.0 = Release|Win32
+		{AE836805-31C5-4C3C-B5B7-95D95E4A6C9A}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
