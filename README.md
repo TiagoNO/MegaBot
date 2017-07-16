@@ -36,4 +36,5 @@ If you're a developer and would like to build MegaBot yourself, please refer to 
 - Anderson "Zealot" Tavares
 - Amanda "Valkyrie" Santos
 - Hector "Firebat" Azpúrua
+- Tiago "Goliath" Oliveira
 - Luiz "Commander" Chaimowicz
