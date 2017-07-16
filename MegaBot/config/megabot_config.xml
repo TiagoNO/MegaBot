@@ -8,7 +8,7 @@
 	<write-dir value="bwapi-data/write/" />
 	<match-output value="output.xml" />
 	<alpha value="0.2" /> <!-- learning rate for strategy value update on epsilon-greedy -->
-	<epsilon value="0.15" /> <!-- exploration coefficient  on epsilon-greedy  -->
+	<epsilon value="0.10" /> <!-- exploration coefficient  on epsilon-greedy  -->
 	<speed value="0" />
 	<gui value="true" />
 </config>

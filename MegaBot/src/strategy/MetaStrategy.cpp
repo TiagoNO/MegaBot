@@ -34,8 +34,8 @@ MetaStrategy::MetaStrategy() : rng(std::time(0)) {
     portfolio.insert(make_pair(SKYNET, new Skynet()));
     portfolio.insert(make_pair(XELNAGA, new Xelnaga()));
     portfolio.insert(make_pair(NUSBot, new NUSBotModule()));
-	portfolio.insert(make_pair(EXPLORE, new Explore()));
-	portfolio.insert(make_pair(EXPAND, new Expand()));
+	//portfolio.insert(make_pair(EXPLORE, new Explore()));
+	//portfolio.insert(make_pair(EXPAND, new Expand()));
 
     //initializes reverse map
 	map<string, BWAPI::AIModule*>::iterator behv;
