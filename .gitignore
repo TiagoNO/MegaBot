@@ -21,3 +21,7 @@
 /XelNaga/AiurModule/Debug/*.log
 *.lastbuildstate
 /MegaBot/*.user
+/PackAndAttack/PackAndAttack.sdf
+/PackAndAttack/PackAndAttack.v12.suo
+/Expand/Release
+/Explore/Release
