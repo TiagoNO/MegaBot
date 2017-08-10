@@ -41,6 +41,3 @@ If you're a developer and would like to build MegaBot yourself, please refer to 
 ### Former
 - Amanda "Valkyrie" Santos
 - Hector "Firebat" Azpúrua
-
-
-asjkksjdkasjdkasjdka
