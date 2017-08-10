@@ -37,7 +37,7 @@ Configuration::Configuration() {
     //readDataFile = READ_DIR + "output.xml";
     strategyFile = INPUT_DIR + "megabot_protoss-uniform.xml";
 
-	enemyInformationPrefix = "MegaBot-vs-";
+	enemyInformationPrefix = "q_MegaBot-vs-";
     crashInformationPrefix = "crash_MegaBot-vs-";
 
 	metaStrategyID = "epsilon-greedy"; 

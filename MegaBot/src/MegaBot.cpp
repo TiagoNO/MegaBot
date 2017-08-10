@@ -9,6 +9,7 @@
 #include "Xelnaga.h"
 #include "Skynet.h"
 #include "NUSBotModule.h"
+#include "UnitInfoManager.h"
 #include "strategy/MetaStrategy.h"
 #include "strategy/MetaStrategyManager.h"
 #include "data/Configuration.h"
@@ -39,6 +40,9 @@ void MegaBot::onStart() {
 
     MatchData::getInstance()->registerMatchBegin();
     Configuration::getInstance()->parseConfig();
+
+	// initializes UnitInfoManager
+	scutil::UnitInfoManager::getInstance();
 
 	//initializes and registers meta strategy (strategy selector)
 	metaStrategy = MetaStrategyManager::getMetaStrategy();
@@ -123,6 +127,8 @@ void MegaBot::onFrame() {
         return;
     }
 
+	scutil::UnitInfoManager::getInstance().onFrame();
+
 	if(Broodwar->getFrameCount() == 0){ logger->log("first metaStrategy->onFrame()"); }
 	metaStrategy->onFrame();	//might switch strategy so I update currentStrategy below
 
@@ -173,24 +179,29 @@ void MegaBot::onNukeDetect(BWAPI::Position target) {
 }
 
 void MegaBot::onUnitDiscover(BWAPI::Unit* unit) {
+	scutil::UnitInfoManager::getInstance().onUnitDiscover(unit);
 	GameState::onUnitDiscover(unit);
     currentStrategy->onUnitDiscover(unit);
 }
 
 void MegaBot::onUnitEvade(BWAPI::Unit* unit) {
+	scutil::UnitInfoManager::getInstance().onUnitEvade(unit);
     currentStrategy->onUnitEvade(unit);
 }
 
 void MegaBot::onUnitShow(BWAPI::Unit* unit) {
+	scutil::UnitInfoManager::getInstance().onUnitShow(unit);
 	GameState::onUnitShow(unit);
     currentStrategy->onUnitShow(unit);
 }
 
 void MegaBot::onUnitHide(BWAPI::Unit* unit) {
+	scutil::UnitInfoManager::getInstance().onUnitHide(unit);
     currentStrategy->onUnitHide(unit);
 }
 
 void MegaBot::onUnitCreate(BWAPI::Unit* unit) {
+	scutil::UnitInfoManager::getInstance().onUnitCreate(unit);
 	GameState::onUnitCreate(unit);
     currentStrategy->onUnitCreate(unit);
 }
@@ -204,6 +215,8 @@ void MegaBot::onUnitDestroy(BWAPI::Unit* unit) {
 		unit->getPlayer()->getName().c_str()
 	);
 
+	scutil::UnitInfoManager::getInstance().onUnitDestroy(unit);
+
 	if (unit->getPlayer()->getID() == Broodwar->enemy()->getID())	{
 		GameState::onUnitDestroy(unit);
 	}
@@ -212,10 +225,12 @@ void MegaBot::onUnitDestroy(BWAPI::Unit* unit) {
 }
 
 void MegaBot::onUnitMorph(BWAPI::Unit* unit) {
+	scutil::UnitInfoManager::getInstance().onUnitMorph(unit);
     currentStrategy->onUnitMorph(unit);
 }
 
 void MegaBot::onUnitRenegade(BWAPI::Unit* unit) {
+	scutil::UnitInfoManager::getInstance().onUnitRenegade(unit);
     currentStrategy->onUnitRenegade(unit);
 }
 
@@ -224,18 +239,10 @@ void MegaBot::onSaveGame(std::string gameName) {
 }
 
 void MegaBot::onUnitComplete(BWAPI::Unit *unit) {
+	scutil::UnitInfoManager::getInstance().onUnitComplete(unit);
     currentStrategy->onUnitComplete(unit);
 }
 
-/*
-string MegaBot::myBehavior() {
-    return myBehaviorName;
-}
-
-string MegaBot::enemyBehavior() {
-    return enemyBehaviorName;
-}
-*/
 void MegaBot::handshake(string text){
 	//behavior message recognition: checks whether text ends with 'on!'
     if (enemyBehaviorName == "Unknown" && text.substr(max(3, int(text.size())) - 3) == string("on!")) {
