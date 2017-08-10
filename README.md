@@ -1,4 +1,4 @@
-# MegaBot
+﻿# MegaBot
 StarCraft bot designed to test strategy selection. For MegaBot, strategy is the incorporation of another bot's behavior. Currently it incorporates Skynet, Xelnaga and NUSBot.
 
 - For a detailed description of MegaBot, check out the [wiki](https://github.com/andertavares/MegaBot/wiki).
@@ -41,3 +41,6 @@ If you're a developer and would like to build MegaBot yourself, please refer to 
 ### Former
 - Amanda "Valkyrie" Santos
 - Hector "Firebat" Azpúrua
+
+
+asjkksjdkasjdkasjdka
