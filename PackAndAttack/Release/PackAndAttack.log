@@ -1,13 +1,112 @@
-﻿Build started 10/08/2017 14:35:41.
-     1>Project "C:\software\MegaBot-master\PackAndAttack\PackAndAttack.vcxproj" on node 8 (Build target(s)).
+﻿Build started 14/08/2017 16:31:16.
+     1>Project "F:\MegaBot_tiago\PackAndAttack\PackAndAttack.vcxproj" on node 3 (Build target(s)).
      1>ClCompile:
-         c:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\CL.exe /c /I../include /Zi /nologo /W3 /WX- /O2 /Oi /Oy- /GL /D WIN32 /D NDEBUG /D _WINDOWS /D _USRDLL /D EXAMPLEAIMODULE_EXPORTS /D "_SECURE_SCL 0" /D _UNICODE /D UNICODE /Gm- /EHsc /MD /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Release\\" /Fd"Release\vc90.pdb" /Gd /TP /analyze- /errorReport:prompt Source\Dll.cpp Source\PackAndAttack.cpp
-         Dll.cpp
-     1>c:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\include\../../../BWAPI/include/BWAPI.h(5): fatal error C1083: Cannot open include file: 'BWAPI/InterfaceEvent.h': No such file or directory
+         C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\CL.exe /c /Ic:\software\BWAPI3.7.5/include /Zi /nologo /W3 /WX- /O2 /Oi /Oy- /GL /D WIN32 /D NDEBUG /D _WINDOWS /D _USRDLL /D EXAMPLEAIMODULE_EXPORTS /D "_SECURE_SCL 0" /D _UNICODE /D UNICODE /Gm- /EHsc /MD /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Release\\" /Fd"Release\vc90.pdb" /Gd /TP /analyze- /errorReport:prompt Source\PackAndAttack.cpp
          PackAndAttack.cpp
-     1>c:\software\megabot-master\packandattack\source\PackAndAttack.h(3): fatal error C1083: Cannot open include file: 'BWAPI.h': No such file or directory
-     1>Done Building Project "C:\software\MegaBot-master\PackAndAttack\PackAndAttack.vcxproj" (Build target(s)) -- FAILED.
+     1>Source\PackAndAttack.cpp(20): error C2839: invalid return type 'BWTA::Chokepoint *const *' for overloaded 'operator ->'
+     1>Source\PackAndAttack.cpp(20): error C2039: 'getCenter' : is not a member of 'std::_Tree<_Traits>::const_iterator'
+                 with
+                 [
+                     _Traits=std::_Tset_traits<BWTA::Chokepoint *,std::less<BWTA::Chokepoint *>,std::allocator<BWTA::Chokepoint *>,false>
+                 ]
+                 C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\include\xtree(202) : see declaration of 'std::_Tree<_Traits>::const_iterator'
+                 with
+                 [
+                     _Traits=std::_Tset_traits<BWTA::Chokepoint *,std::less<BWTA::Chokepoint *>,std::allocator<BWTA::Chokepoint *>,false>
+                 ]
+     1>Source\PackAndAttack.cpp(22): error C2839: invalid return type 'BWTA::Chokepoint *const *' for overloaded 'operator ->'
+     1>Source\PackAndAttack.cpp(22): error C2039: 'getCenter' : is not a member of 'std::_Tree<_Traits>::const_iterator'
+                 with
+                 [
+                     _Traits=std::_Tset_traits<BWTA::Chokepoint *,std::less<BWTA::Chokepoint *>,std::allocator<BWTA::Chokepoint *>,false>
+                 ]
+                 C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\include\xtree(202) : see declaration of 'std::_Tree<_Traits>::const_iterator'
+                 with
+                 [
+                     _Traits=std::_Tset_traits<BWTA::Chokepoint *,std::less<BWTA::Chokepoint *>,std::allocator<BWTA::Chokepoint *>,false>
+                 ]
+     1>Source\PackAndAttack.cpp(22): error C2228: left of '.x' must have class/struct/union
+     1>Source\PackAndAttack.cpp(22): error C2839: invalid return type 'BWTA::Chokepoint *const *' for overloaded 'operator ->'
+     1>Source\PackAndAttack.cpp(22): error C2039: 'getCenter' : is not a member of 'std::_Tree<_Traits>::const_iterator'
+                 with
+                 [
+                     _Traits=std::_Tset_traits<BWTA::Chokepoint *,std::less<BWTA::Chokepoint *>,std::allocator<BWTA::Chokepoint *>,false>
+                 ]
+                 C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\include\xtree(202) : see declaration of 'std::_Tree<_Traits>::const_iterator'
+                 with
+                 [
+                     _Traits=std::_Tset_traits<BWTA::Chokepoint *,std::less<BWTA::Chokepoint *>,std::allocator<BWTA::Chokepoint *>,false>
+                 ]
+     1>Source\PackAndAttack.cpp(22): error C2228: left of '.y' must have class/struct/union
+     1>Source\PackAndAttack.cpp(24): error C2839: invalid return type 'BWTA::Chokepoint *const *' for overloaded 'operator ->'
+     1>Source\PackAndAttack.cpp(24): error C2039: 'getCenter' : is not a member of 'std::_Tree<_Traits>::const_iterator'
+                 with
+                 [
+                     _Traits=std::_Tset_traits<BWTA::Chokepoint *,std::less<BWTA::Chokepoint *>,std::allocator<BWTA::Chokepoint *>,false>
+                 ]
+                 C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\include\xtree(202) : see declaration of 'std::_Tree<_Traits>::const_iterator'
+                 with
+                 [
+                     _Traits=std::_Tset_traits<BWTA::Chokepoint *,std::less<BWTA::Chokepoint *>,std::allocator<BWTA::Chokepoint *>,false>
+                 ]
+     1>Source\PackAndAttack.cpp(27): error C2451: conditional expression of type 'std::_Tree<_Traits>::const_iterator' is illegal
+                 with
+                 [
+                     _Traits=std::_Tset_traits<BWAPI::Unit *,std::less<BWAPI::Unit *>,std::allocator<BWAPI::Unit *>,false>
+                 ]
+                 No user-defined-conversion operator available that can perform this conversion, or the operator cannot be called
+     1>Source\PackAndAttack.cpp(29): error C2839: invalid return type 'BWAPI::Unit *const *' for overloaded 'operator ->'
+     1>Source\PackAndAttack.cpp(29): error C2039: 'getType' : is not a member of 'std::_Tree<_Traits>::const_iterator'
+                 with
+                 [
+                     _Traits=std::_Tset_traits<BWAPI::Unit *,std::less<BWAPI::Unit *>,std::allocator<BWAPI::Unit *>,false>
+                 ]
+                 C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\include\xtree(202) : see declaration of 'std::_Tree<_Traits>::const_iterator'
+                 with
+                 [
+                     _Traits=std::_Tset_traits<BWAPI::Unit *,std::less<BWAPI::Unit *>,std::allocator<BWAPI::Unit *>,false>
+                 ]
+     1>Source\PackAndAttack.cpp(29): error C2228: left of '.isResourceDepot' must have class/struct/union
+     1>Source\PackAndAttack.cpp(31): error C2839: invalid return type 'BWAPI::Unit *const *' for overloaded 'operator ->'
+     1>Source\PackAndAttack.cpp(31): error C2039: 'getPosition' : is not a member of 'std::_Tree<_Traits>::const_iterator'
+                 with
+                 [
+                     _Traits=std::_Tset_traits<BWAPI::Unit *,std::less<BWAPI::Unit *>,std::allocator<BWAPI::Unit *>,false>
+                 ]
+                 C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\include\xtree(202) : see declaration of 'std::_Tree<_Traits>::const_iterator'
+                 with
+                 [
+                     _Traits=std::_Tset_traits<BWAPI::Unit *,std::less<BWAPI::Unit *>,std::allocator<BWAPI::Unit *>,false>
+                 ]
+     1>Source\PackAndAttack.cpp(31): error C2228: left of '.x' must have class/struct/union
+     1>Source\PackAndAttack.cpp(31): error C2839: invalid return type 'BWAPI::Unit *const *' for overloaded 'operator ->'
+     1>Source\PackAndAttack.cpp(31): error C2039: 'getPosition' : is not a member of 'std::_Tree<_Traits>::const_iterator'
+                 with
+                 [
+                     _Traits=std::_Tset_traits<BWAPI::Unit *,std::less<BWAPI::Unit *>,std::allocator<BWAPI::Unit *>,false>
+                 ]
+                 C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\include\xtree(202) : see declaration of 'std::_Tree<_Traits>::const_iterator'
+                 with
+                 [
+                     _Traits=std::_Tset_traits<BWAPI::Unit *,std::less<BWAPI::Unit *>,std::allocator<BWAPI::Unit *>,false>
+                 ]
+     1>Source\PackAndAttack.cpp(31): error C2228: left of '.y' must have class/struct/union
+     1>Source\PackAndAttack.cpp(33): error C2839: invalid return type 'BWAPI::Unit *const *' for overloaded 'operator ->'
+     1>Source\PackAndAttack.cpp(33): error C2039: 'getPosition' : is not a member of 'std::_Tree<_Traits>::const_iterator'
+                 with
+                 [
+                     _Traits=std::_Tset_traits<BWAPI::Unit *,std::less<BWAPI::Unit *>,std::allocator<BWAPI::Unit *>,false>
+                 ]
+                 C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\include\xtree(202) : see declaration of 'std::_Tree<_Traits>::const_iterator'
+                 with
+                 [
+                     _Traits=std::_Tset_traits<BWAPI::Unit *,std::less<BWAPI::Unit *>,std::allocator<BWAPI::Unit *>,false>
+                 ]
+     1>Source\PackAndAttack.cpp(179): error C2039: 'isWorker' : is not a member of 'BWAPI::Unit'
+                 c:\software\BWAPI3.7.5\include\BWAPI/Unit.h(42) : see declaration of 'BWAPI::Unit'
+     1>Source\PackAndAttack.cpp(181): error C2660: 'MoveClosestBaseOrChokePoint' : function does not take 1 arguments
+     1>Done Building Project "F:\MegaBot_tiago\PackAndAttack\PackAndAttack.vcxproj" (Build target(s)) -- FAILED.
 
 Build FAILED.
 
-Time Elapsed 00:00:00.26
+Time Elapsed 00:00:01.53
