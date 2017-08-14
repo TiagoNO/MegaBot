@@ -7,7 +7,7 @@
 #include "MetaStrategy.h"
 #include "Explore.h"
 #include "Expand.h"
-#include "../MegaBot-master/PackAndAttack/Source/PackAndAttack.h"
+#include "PackAndAttack.h"
 #include "Xelnaga.h"
 #include "Skynet.h"
 #include "NUSBotModule.h"

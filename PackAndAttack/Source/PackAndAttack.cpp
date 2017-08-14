@@ -1,4 +1,6 @@
 #include "PackAndAttack.h"
+#include <math.h>
+
 using namespace BWAPI;
 
 int dist(int x1,int y1,int x2,int y2)
