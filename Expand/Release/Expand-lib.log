@@ -1,9 +1,0 @@
-﻿Build started 10/08/2017 14:35:41.
-     1>Project "C:\software\MegaBot-master\Expand\Expand-lib.vcxproj" on node 7 (Build target(s)).
-     1>Lib:
-         Expand-lib.vcxproj -> C:\software\MegaBot-master\MegaBot\Release\Expand-lib.lib
-     1>Done Building Project "C:\software\MegaBot-master\Expand\Expand-lib.vcxproj" (Build target(s)).
-
-Build succeeded.
-
-Time Elapsed 00:00:00.07
