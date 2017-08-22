@@ -58,40 +58,53 @@ void EpsilonGreedy::onStart() {
             //BWAPI::Player* enemy = Broodwar->enemy();
             string enemy_name = Broodwar->enemy()->getName();
             XMLElement* rootNode = doc.FirstChildElement("scores");
+			XMLElement* frameNode;
 
             if (rootNode != NULL) {
-                XMLElement* candidate = rootNode->FirstChildElement();
-                string best_name;
-                float best_score = -1.0f;
-
-                map<string, float> scoresMap;
-				scoresMap[MetaStrategy::NUSBot] = 0;
-                scoresMap[MetaStrategy::SKYNET] = 0;
-                scoresMap[MetaStrategy::XELNAGA] = 0;
-
-                while (candidate != NULL) {
-                    float score = -FLT_MAX;
-                    candidate->QueryFloatText(&score);
-
-                    scoresMap[candidate->Name()] = score;
-                    candidate = candidate->NextSiblingElement();
-                }
-
-                for (std::map<string, float>::iterator it = scoresMap.begin(); it != scoresMap.end(); ++it) {
-                    if (it->second > best_score) {
-                        best_name = it->first;
-                        best_score = it->second;
-                    }
-                }
-
-                if (best_name.empty()) {
-                    Logging::getInstance()->log("Best strategy could not be determined. Choosing randomly");
-					name += " failed. Best score not found";
+				frameNode = rootNode->FirstChildElement("frame");
+				if(frameNode == NULL)
+				{
 					currentStrategy = randomUniform();
-                }
-                else {
-                    currentStrategy = portfolio[best_name];
-                }
+					frameNode->SetAttribute("value",0);
+				}
+				else
+				{
+					XMLElement* candidate = frameNode->FirstChildElement();
+					string best_name;
+					float best_score = -1.0f;
+
+					map<string, float> scoresMap;
+					scoresMap[MetaStrategy::NUSBot] = 0;
+					scoresMap[MetaStrategy::SKYNET] = 0;
+					scoresMap[MetaStrategy::XELNAGA] = 0;
+					scoresMap[MetaStrategy::EXPAND] = 0;
+					scoresMap[MetaStrategy::EXPLORE] = 0;
+					scoresMap[MetaStrategy::PACKANDATTACK] = 0;
+
+					while (candidate != NULL) {
+						float score = -FLT_MAX;
+						candidate->QueryFloatText(&score);
+
+						scoresMap[candidate->Name()] = score;
+						candidate = candidate->NextSiblingElement();
+					}
+
+					for (std::map<string, float>::iterator it = scoresMap.begin(); it != scoresMap.end(); ++it) {
+						if (it->second > best_score) {
+							best_name = it->first;
+							best_score = it->second;
+						}
+					}
+
+					if (best_name.empty()) {
+						Logging::getInstance()->log("Best strategy could not be determined. Choosing randomly");
+						name += " failed. Best score not found";
+						currentStrategy = randomUniform();
+					}
+					else {
+						currentStrategy = portfolio[best_name];
+					}
+				}
             }
             else {
                 Logging::getInstance()->log("Enemy information not found, choosing strategy randomly");

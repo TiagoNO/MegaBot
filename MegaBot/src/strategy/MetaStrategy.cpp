@@ -5,11 +5,11 @@
 #include <cfloat>
 #include "BWAPI.h"
 #include "MetaStrategy.h"
-#include "Explore.h"
-#include "Expand.h"
-#include "../MegaBot-master/PackAndAttack/Source/PackAndAttack.h"
 #include "Xelnaga.h"
 #include "Skynet.h"
+#include "PackAndAttack.h"
+#include "Expand.h"
+#include "Explore.h"
 #include "NUSBotModule.h"
 #include "../MegaBot.h"
 #include "../data/Configuration.h"
@@ -63,6 +63,7 @@ std::string MetaStrategy::getCurrentStrategyName(){
 }
 
 void MetaStrategy::onStart() {
+	lastFrameChecked = 0;
 	map<string, BWAPI::AIModule*>::iterator behv;
 
 	for(behv = portfolio.begin(); behv != portfolio.end(); behv++){
@@ -74,6 +75,12 @@ void MetaStrategy::onStart() {
 string MetaStrategy::getName(){
 	return name;
 }
+
+int MetaStrategy::getLastFrameNode()
+{
+	return lastFrameChecked;
+}
+
 
 void MetaStrategy::forceStrategy(string strategyName){
 
@@ -127,10 +134,109 @@ AIModule* MetaStrategy::randomUniform() {
 	return (*iter).second;
 }
 
+string MetaStrategy::ChooseNewBerravior(BWAPI::AIModule* currentStrategy)
+{
+    using namespace tinyxml2;
+
+
+    /* DEBUG
+    ofstream outFile;
+    outFile.open("bwapi-data/write/dbg.txt", ios::out | ios::app);
+    */
+
+    XMLElement* rootNode;
+    XMLElement* myBehvNode;
+	XMLElement* frameNode;
+    XMLElement* queryNode;
+
+    string inputFile = Configuration::getInstance()->enemyInformationInputFile();
+    string outputFile = Configuration::getInstance()->enemyInformationOutputFile();
+
+    //const char* filename = Configuration::getInstance()->readDataFile.c_str();
+
+    tinyxml2::XMLDocument doc;
+    XMLError input_result = doc.LoadFile(inputFile.c_str());
+
+    // if file was not found, ok, we create a node and fill information in it
+	if (input_result == XML_ERROR_FILE_NOT_FOUND) {
+        rootNode = doc.NewElement("scores");
+        doc.InsertFirstChild(rootNode);
+    }
+    // if another error occurred, we're in trouble =/
+    else if (input_result != XML_NO_ERROR) {
+		
+        /*Broodwar->printf(
+            "Error while parsing the configuration file '%s'. Error: '%s'",
+            inputFile,
+            doc.ErrorName()
+        );*/
+
+		
+        return "a";
+    }
+    else { //no error, goes after root node
+        rootNode = doc.FirstChildElement("scores");
+        if (rootNode == NULL) {
+            rootNode = doc.NewElement("scores");
+            doc.InsertFirstChild(rootNode);
+        }
+    }
+
+	frameNode = rootNode->FirstChildElement("frame");
+	while(frameNode != NULL)
+	{
+		if(frameNode->Attribute("value") != NULL && frameNode->Attribute("value") == (const char*)(Broodwar->getFrameCount()))
+		{
+			break;
+		}
+		frameNode = frameNode->NextSiblingElement("frame");
+	}
+	if(frameNode == NULL)
+	{
+		frameNode = doc.NewElement("frame");
+		frameNode->SetAttribute("value",Broodwar->getFrameCount());
+		rootNode->InsertEndChild(frameNode);
+		forceStrategy("random");
+		myBehvNode = doc.NewElement(getCurrentStrategyName().c_str());
+		myBehvNode->SetAttribute("value",1);
+		frameNode->InsertFirstChild(myBehvNode);
+	}
+	else
+	{
+		myBehvNode = frameNode->FirstChildElement();
+		if (myBehvNode == NULL) 
+		{
+			forceStrategy("random");
+			myBehvNode = doc.NewElement(getCurrentStrategyName().c_str());
+			myBehvNode->SetAttribute("value",1);
+			frameNode->InsertFirstChild(myBehvNode);
+		}
+		else {
+			float bigger = -1.0f;
+			string BotName =  "Skynet";
+			float score = -FLT_MAX;
+			while(myBehvNode != NULL)
+			{
+				if(bigger < myBehvNode->FloatAttribute("value"))
+				{
+					bigger = myBehvNode->FloatAttribute("value");
+					BotName = myBehvNode->Name();
+				}
+				myBehvNode = myBehvNode->NextSiblingElement();
+			}
+			forceStrategy(BotName);
+		}
+	}
+	lastFrameChecked = Broodwar->getFrameCount();
+    doc.SaveFile(outputFile.c_str());
+	doc.SaveFile(inputFile.c_str());
+	return "a";
+}
 
 /*
 void MetaStrategy::printInfo() {
     Broodwar->drawTextScreen(180, 5, "\x0F%s", currentStrategyId.c_str());
 }
 */
+
 

@@ -38,6 +38,8 @@ class MatchData {
 	int enemyUnitScore, enemyKillScore, enemyBuildingScore, enemyRazingScore, enemyGatheredMinerals, enemyGatheredGas, enemyTotal;
 
 	int gameResult;
+
+	int lastFrameState;
 	
 	MatchData();
 
@@ -53,7 +55,6 @@ public:
 
 	/** Returns the path to the output file containing the summary of matches*/
 	string getSummaryFilename();
-
 
 	/** 
 	 * Registers match result, end time and score data

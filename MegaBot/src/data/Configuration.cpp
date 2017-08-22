@@ -8,7 +8,7 @@
 #include <BWAPI.h>
 
 //BEGIN: change these if you need to read/write in different folders
-const string Configuration::INPUT_DIR = "bwapi-data/AI/";
+const string Configuration::INPUT_DIR = "bwapi-data/AI";
 string Configuration::OUTPUT_DIR = "bwapi-data/write/";
 string Configuration::READ_DIR = "bwapi-data/read/";
 //END: change these if you need to read/write in different folders

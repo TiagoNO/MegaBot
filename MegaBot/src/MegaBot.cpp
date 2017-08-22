@@ -7,6 +7,8 @@
 #include "MegaBot.h"
 #include "Explore.h"
 #include "Xelnaga.h"
+#include "PackAndAttack.h"
+#include "Expand.h"
 #include "Skynet.h"
 #include "NUSBotModule.h"
 #include "strategy/MetaStrategy.h"
@@ -37,22 +39,21 @@ void MegaBot::onStart() {
     // Uncomment to enable complete map information
     //Broodwar->enableFlag(Flag::CompleteMapInformation);
 
-    MatchData::getInstance()->registerMatchBegin();
-    Configuration::getInstance()->parseConfig();
+    MatchData::getInstance()->registerMatchBegin(); // registra o inicio da partida
+    Configuration::getInstance()->parseConfig();  // pega os registros de configuração do megabot no arquivo xml
 
 	//initializes and registers meta strategy (strategy selector)
-	metaStrategy = MetaStrategyManager::getMetaStrategy();
-	MatchData::getInstance()->registerMetaStrategy(metaStrategy->getName());
-	metaStrategy->onStart();
+	metaStrategy = MetaStrategyManager::getMetaStrategy(); // recebe qual o tipo de estratégia utilizará, como e-greedy
+	MatchData::getInstance()->registerMetaStrategy(metaStrategy->getName()); // reistra o tipo de estratégia que utilizará
+	metaStrategy->onStart();  // chama o onStart() de todos os comportamentos registrados no megabot
 
 	//retrieves strategy to begin match
-	currentStrategy = metaStrategy->getCurrentStrategy();
+	currentStrategy = metaStrategy->getCurrentStrategy(); // 
 
     //Broodwar->sendText("%s on!", myBehaviorName.c_str());		//sends behavior communication message
 	logger->log("Game started with %s !", metaStrategy->getCurrentStrategyName().c_str());
 
     MatchData::getInstance()->registerMyBehaviorName(metaStrategy->getCurrentStrategyName());
-	
     //currentBehavior->onStart();
 
     MatchData::getInstance()->writeToCrashFile();
@@ -103,12 +104,19 @@ void MegaBot::onEnd(bool isWinner) {
     MatchData::getInstance()->writeDetailedResult();
     MatchData::getInstance()->updateCrashFile();	//TODO: valid only for epsilon-greedy!
 
+
 	currentStrategy->onEnd(isWinner);
 	logger->log("Finished.");
 }
 
 void MegaBot::onFrame() {
 
+	if(Broodwar->getFrameCount() == metaStrategy->getLastFrameNode() + 4286)
+	{
+		Broodwar->sendText("Changing Strategy... (in minute %i)",Broodwar->elapsedTime()/60);
+		metaStrategy->ChooseNewBerravior(currentStrategy);
+		MatchData::getInstance()->registerMyBehaviorName(metaStrategy->getCurrentStrategyName().c_str());
+	}
 	if(Broodwar->getFrameCount() == 0){
 		logger->log("BEGIN: first onFrame.");
 	}

@@ -54,7 +54,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../include;../Explore/Source;..\XelNaga\AiurModule\Source;..\XelNaga\include;..\Skynet\Skynet;..\NUSBot\NUSBot\src\SparCraft\source;..\NUSBot\NUSBot\src\NUSBot\Source;$(BWAPI_DIR)/include;$(BOOST_DIR);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../include;../Explore/Source;../Expand/Source;../PackAndAttack/Source;..\XelNaga\AiurModule\Source;..\XelNaga\include;..\Skynet\Skynet;..\NUSBot\NUSBot\src\SparCraft\source;..\NUSBot\NUSBot\src\NUSBot\Source;$(BWAPI_DIR)/include;$(BOOST_DIR);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;SKYNET_EXPORTS;_DEBUG;_WINDOWS;_USRDLL;EXAMPLEAIMODULE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -76,7 +76,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>../include;../Explore/Source;../Expand/Source;..\XelNaga\AiurModule\Source;..\XelNaga\include;..\Skynet\Skynet;..\NUSBot\NUSBot\src\SparCraft\source;..\NUSBot\NUSBot\src\NUSBot\Source;$(BWAPI_DIR)/include;$(BOOST_DIR);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../include;../Explore/Source;../Expand/Source;../PackAndAttack/Source;../Expand/Source;..\XelNaga\AiurModule\Source;..\XelNaga\include;..\Skynet\Skynet;..\NUSBot\NUSBot\src\SparCraft\source;..\NUSBot\NUSBot\src\NUSBot\Source;$(BWAPI_DIR)/include;$(BOOST_DIR);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;SKYNET_EXPORTS;NDEBUG;_WINDOWS;_USRDLL;EXAMPLEAIMODULE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>

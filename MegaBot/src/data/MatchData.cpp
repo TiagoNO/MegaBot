@@ -27,7 +27,7 @@ void MatchData::registerMatchBegin() {
 	logger->log("Match started at: %s", startTime.c_str());
 	logger->log("Map is: %s", Broodwar->mapFileName().c_str());
 	logger->log("Enemy is: %s", Broodwar->enemy()->getName().c_str() );
-
+	MatchData::lastFrameState = 0;
 }
 
 void MatchData::registerMatchFinish(int result) {
@@ -78,6 +78,7 @@ void MatchData::writeDetailedResult() {
 
     XMLElement* rootNode;
     XMLElement* myBehvNode;
+	XMLElement* frameNode;
     XMLElement* queryNode;
 
     string inputFile = Configuration::getInstance()->enemyInformationInputFile();
@@ -89,7 +90,7 @@ void MatchData::writeDetailedResult() {
     XMLError input_result = doc.LoadFile(inputFile.c_str());
 
     // if file was not found, ok, we create a node and fill information in it
-    if (input_result == XML_ERROR_FILE_NOT_FOUND) {
+	if (input_result == XML_ERROR_FILE_NOT_FOUND) {
         rootNode = doc.NewElement("scores");
         doc.InsertFirstChild(rootNode);
     }
@@ -144,21 +145,59 @@ void MatchData::writeDetailedResult() {
     float score = 0;
     float alpha = Configuration::getInstance()->alpha; //alias for easy reading
 
-
-    myBehvNode = rootNode->FirstChildElement(myBehaviorName.c_str());
-    if (myBehvNode == NULL) {
-        score = alpha*result_value;
-        myBehvNode = doc.NewElement(myBehaviorName.c_str());
-        myBehvNode->SetText(score);
-        rootNode->InsertFirstChild(myBehvNode);
-    }
-    else {
-        myBehvNode->QueryFloatText(&oldScore);
-        score = (1 - alpha)*oldScore + alpha*result_value;
-        myBehvNode->SetText(score);
-    }
-
+	if(Broodwar->getFrameCount() - 4286 <= lastFrameState)
+	{
+		frameNode = rootNode->LastChildElement("frame");
+	}
+	else
+	{
+		frameNode = rootNode->FirstChildElement("frame");
+		while(frameNode != NULL)
+		{
+			if(frameNode->Attribute("value") != NULL && frameNode->Attribute("value") == (const char*)(Broodwar->getFrameCount()))
+			{
+				break;
+			}
+			frameNode = frameNode->NextSiblingElement("frame");
+		}
+	}
+	if(frameNode == NULL)
+	{
+		frameNode = doc.NewElement("frame");
+		frameNode->SetAttribute("value",Broodwar->getFrameCount());
+		rootNode->InsertEndChild(frameNode);
+		myBehvNode = frameNode->FirstChildElement(myBehaviorName.c_str());
+		if (myBehvNode == NULL) 
+		{
+			 score = alpha*result_value;
+			 myBehvNode = doc.NewElement(myBehaviorName.c_str());
+			 myBehvNode->SetText(score);
+			 frameNode->InsertFirstChild(myBehvNode);
+		}
+		else {
+			 myBehvNode->QueryFloatText(&oldScore);
+			 score = (1 - alpha)*oldScore + alpha*result_value;
+			 myBehvNode->SetText(score);
+		}
+	}
+	else
+	{
+		myBehvNode = frameNode->FirstChildElement(myBehaviorName.c_str());
+		if (myBehvNode == NULL) 
+		{
+			 score = alpha*result_value;
+			 myBehvNode = doc.NewElement(myBehaviorName.c_str());
+			 myBehvNode->SetText(score);
+			 frameNode->InsertFirstChild(myBehvNode);
+		}
+		else {
+			 myBehvNode->QueryFloatText(&oldScore);
+			 score = (1 - alpha)*oldScore + alpha*result_value;
+			 myBehvNode->SetText(score);
+		}
+	}
     doc.SaveFile(outputFile.c_str());
+	doc.SaveFile(inputFile.c_str());
 }
 
 MatchData* MatchData::getInstance() {
@@ -338,3 +377,4 @@ void MatchData::updateCrashFile() {
         }
     }
 }
+
