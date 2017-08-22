@@ -1,9 +1,15 @@
-﻿Build started 10/08/2017 14:35:41.
-     1>Project "C:\software\MegaBot-master\Expand\Expand-lib.vcxproj" on node 7 (Build target(s)).
-     1>Lib:
-         Expand-lib.vcxproj -> C:\software\MegaBot-master\MegaBot\Release\Expand-lib.lib
-     1>Done Building Project "C:\software\MegaBot-master\Expand\Expand-lib.vcxproj" (Build target(s)).
+﻿Build started 22/08/2017 16:29:25.
+     1>Project "C:\Users\Tiago\Desktop\Jogos e programas\GitHub\MegaBotRepository\Expand\Expand-lib.vcxproj" on node 7 (Rebuild target(s)).
+     1>ClCompile:
+         c:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\CL.exe /c /I../include /Ic:\software\BWAPI3.7.4/include /Ic:\software\boost /Zi /nologo /W3 /WX- /O2 /Oi /Oy- /GL /D WIN32 /D NDEBUG /D _WINDOWS /D _USRDLL /D EXAMPLEAIMODULE_EXPORTS /D _UNICODE /D UNICODE /Gm- /EHsc /MD /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Release\\" /Fd"Release\vc90.pdb" /Gd /TP /analyze- /errorReport:prompt Source\Dll.cpp Source\Expand.cpp
+         Dll.cpp
+         Expand.cpp
+       Lib:
+         c:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\Lib.exe /OUT:"C:\Users\Tiago\Desktop\Jogos e programas\GitHub\MegaBotRepository\MegaBot\Release\Expand-lib.lib" /NOLOGO /LTCG Release\Dll.obj
+         Release\Expand.obj
+         Expand-lib.vcxproj -> C:\Users\Tiago\Desktop\Jogos e programas\GitHub\MegaBotRepository\MegaBot\Release\Expand-lib.lib
+     1>Done Building Project "C:\Users\Tiago\Desktop\Jogos e programas\GitHub\MegaBotRepository\Expand\Expand-lib.vcxproj" (Rebuild target(s)).
 
 Build succeeded.
 
-Time Elapsed 00:00:00.07
+Time Elapsed 00:00:03.92

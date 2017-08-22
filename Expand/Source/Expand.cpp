@@ -380,21 +380,6 @@ void UpdateBases(Cell *Bases,TilePosition WhereIsConstructing,int Id,bool Add,bo
 	free(aux);
 }
 
-void ImprimirBases(Cell *Bases)
-{
-	Cell *aux;
-	int i = 1;
-	aux = Bases;
-	while(aux != NULL)
-	{
-		Broodwar->sendText("Id: %i,Workers: %i,Minerals: %i,Avarege: %f",aux->Info.Id,aux->Info.NumWorkers,aux->Info.NumMineralField,aux->Info.WorkerPerMineral);
-		Broodwar->drawCircle(CoordinateType::Map,aux->Info.PosiX*32,aux->Info.PosiY*32,10,Colors::Red,false);
-		//Broodwar->sendText("%i",i);
-		i++;
-		aux = aux->prox;
-	}
-}
-
 float GetWorkersAvarege(Cell *Bases)
 {
 	Cell *aux;
@@ -556,10 +541,6 @@ void Expand::onStart()
 			if(IdExplorer == -1) // gets the unit that will explore the map
 			{
 				IdExplorer = (*i)->getID();
-				int x = rand()%(Broodwar->mapWidth()*32);
-				int y = rand()%(Broodwar->mapHeight()*32);
-				Position movimento = Position(x,y);
-				(*i)->move(movimento);
 			}
 			if(IdConstructor == -1 && (*i)->getID() != IdExplorer) // gets the unit that will expand when there is enought minerals
 			{
@@ -598,7 +579,6 @@ void Expand::onEnd(bool isWinner)
 void Expand::onFrame()
 {
 	//Broodwar->sendText("%i %i {%i %i}",Built,Expanding,Workers,UnitsBuildLimit);
-	ImprimirBases(Bases);
 	if (show_visibility_data)
 	{
 		drawVisibilityData();
