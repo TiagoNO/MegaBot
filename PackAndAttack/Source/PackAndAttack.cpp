@@ -1,7 +1,9 @@
 #include "PackAndAttack.h"
+#include <math.h>
+
 using namespace BWAPI;
 
-int dist(int x1,int y1,int x2,int y2)
+int distance(int x1,int y1,int x2,int y2)
 {
 	int a = ((x1-x2)*(x1-x2));
 	int b = ((y1-y2)*(y1-y2));
@@ -15,30 +17,30 @@ Position MoveClosestBaseOrChokePoint(Unit *unit,std::set<BWTA::Chokepoint*> chok
 	{
 		if(closest == Position(0,0))
 		{
-			closest = chokes->getCenter();
+			closest = (*chokes)->getCenter();
 		}
-		else if(dist(unit->getPosition().x(),unit->getPosition().y(),chokes->getCenter().x(),chokes->getCenter().y()) < dist(unit->getPosition().x(),unit->getPosition().y(),closest.x(),closest.y()))
+		else if(distance(unit->getPosition().x(),unit->getPosition().y(),(*chokes)->getCenter().x(),(*chokes)->getCenter().y()) < distance(unit->getPosition().x(),unit->getPosition().y(),closest.x(),closest.y()))
 		{
-			closest = chokes->getCenter();
+			closest = (*chokes)->getCenter();
 		}
 	}
-	for(std::set<Unit *>::const_iterator bases=Broodwar->self()->getUnits().begin();bases=Broodwar->self()->getUnits().end();bases++)
+	for(std::set<Unit *>::const_iterator bases=Broodwar->self()->getUnits().begin();bases!=Broodwar->self()->getUnits().end();bases++)
 	{
-		if(bases->getType().isResourceDepot())
+		if((*bases)->getType().isResourceDepot())
 		{
-			if(dist(unit->getPosition().x(),unit->getPosition().y(),bases->getPosition().x(),bases->getPosition().y()) < dist(unit->getPosition().x(),unit->getPosition().y(),closest.x(),closest.y()))
+			if(distance(unit->getPosition().x(),unit->getPosition().y(),(*bases)->getPosition().x(),(*bases)->getPosition().y()) < distance(unit->getPosition().x(),unit->getPosition().y(),closest.x(),closest.y()))
 			{
-				closest = bases->getPosition();
+				closest = (*bases)->getPosition();
 			}
 		}
 	}
 	return closest;
 }
 
-bool analyzed;
-bool analysis_just_finished;
-BWTA::Region* home;
-BWTA::Region* enemy_base;
+bool analyzed2;
+bool analysis_just_finished2;
+BWTA::Region* home2;
+BWTA::Region* enemy_base2;
 int IdExplorador;
 Position WhereToAttack;
 Position reunite;
@@ -54,8 +56,8 @@ void PackAndAttack::onStart()
   Broodwar->enableFlag(Flag::UserInput);
 
   BWTA::readMap();
-  analyzed=false;
-  analysis_just_finished=false;
+  analyzed2=false;
+  analysis_just_finished2=false;
 
   show_bullets=false;
   show_visibility_data=false;
@@ -80,34 +82,8 @@ void PackAndAttack::onStart()
 		if(IdExplorador == -1)
 		{
 			IdExplorador = (*i)->getID();
-			Position movimento = Position(rand()%(Broodwar->mapWidth()*32),rand()%(Broodwar->mapHeight()*32));
-			(*i)->move(movimento);
+			break;
 		}
-        Unit* closestMineral=NULL;
-        for(std::set<Unit*>::iterator m=Broodwar->getMinerals().begin();m!=Broodwar->getMinerals().end();m++)
-        {
-          if (closestMineral==NULL || (*i)->getDistance(*m)<(*i)->getDistance(closestMineral))
-            closestMineral=*m;
-        }
-		if (closestMineral!=NULL && (*i)->getID() != IdExplorador)
-          (*i)->rightClick(closestMineral);
-      }
-      else if ((*i)->getType().isResourceDepot())
-      {
-        //if this is a center, tell it to build the appropiate type of worker
-        if ((*i)->getType().getRace()!=Races::Zerg)
-        {
-          (*i)->train(Broodwar->self()->getRace().getWorker());
-        }
-        else //if we are Zerg, we need to select a larva and morph it into a drone
-        {
-          std::set<Unit*> myLarva=(*i)->getLarva();
-          if (myLarva.size()>0)
-          {
-            Unit* larva=*myLarva.begin();
-            larva->morph(UnitTypes::Zerg_Drone);
-          }
-        }
       }
     }
   }
@@ -133,7 +109,7 @@ void PackAndAttack::onFrame()
     return;
 
   drawStats();
-  if (analyzed && Broodwar->getFrameCount()%30==0)
+  if (analyzed2 && Broodwar->getFrameCount()%30==0)
   {
     //order one of our workers to guard our chokepoint.
     for(std::set<Unit*>::const_iterator i=Broodwar->self()->getUnits().begin();i!=Broodwar->self()->getUnits().end();i++)
@@ -141,7 +117,7 @@ void PackAndAttack::onFrame()
       if ((*i)->getType().isWorker())
       {
         //get the chokepoints linked to our home region
-        chokepoints= home->getChokepoints();
+        chokepoints= home2->getChokepoints();
         double min_length=10000;
         BWTA::Chokepoint* choke=NULL;
 
@@ -162,21 +138,21 @@ void PackAndAttack::onFrame()
       }
     }
   }
-  if (analyzed)
+  if (analyzed2)
     drawTerrainData();
 
-  if (analysis_just_finished)
+  if (analysis_just_finished2)
   {
     Broodwar->printf("Finished analyzing map.");
-    analysis_just_finished=false;
+    analysis_just_finished2=false;
   }
 
 
   for(std::set<Unit *>::const_iterator a=Broodwar->self()->getUnits().begin();a!=Broodwar->self()->getUnits().end();a++)
   {
-	  if(!(*a)->isWorker() && (*a)->isIdle())
+	  if(!(*a)->getType().isWorker() && (*a)->isIdle())
 	  {
-		 reunite = MoveClosestBaseOrChokePoint((*a));
+		 reunite = MoveClosestBaseOrChokePoint((*a),chokepoints);
 		 if(reunite != Position(0,0))
 		 {
 			 (*a)->move(reunite);
@@ -200,7 +176,6 @@ void PackAndAttack::onFrame()
 			}
 		} 
   }
-
 }
 
 void PackAndAttack::onSendText(std::string text)
@@ -219,10 +194,10 @@ void PackAndAttack::onSendText(std::string text)
     show_visibility_data=!show_visibility_data;
   } else if (text=="/analyze")
   {
-    if (analyzed == false)
+    if (analyzed2 == false)
     {
       Broodwar->printf("Analyzing map... this may take a minute");
-      CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)AnalyzeThread, NULL, 0, NULL);
+      CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)AnalyzeThread2, NULL, 0, NULL);
     }
   } else
   {
@@ -345,22 +320,22 @@ void PackAndAttack::onSaveGame(std::string gameName)
   Broodwar->printf("The game was saved to \"%s\".", gameName.c_str());
 }
 
-DWORD WINAPI AnalyzeThread()
+DWORD WINAPI AnalyzeThread2()
 {
   BWTA::analyze();
 
   //self start location only available if the map has base locations
   if (BWTA::getStartLocation(BWAPI::Broodwar->self())!=NULL)
   {
-    home       = BWTA::getStartLocation(BWAPI::Broodwar->self())->getRegion();
+    home2       = BWTA::getStartLocation(BWAPI::Broodwar->self())->getRegion();
   }
   //enemy start location only available if Complete Map Information is enabled.
   if (BWTA::getStartLocation(BWAPI::Broodwar->enemy())!=NULL)
   {
-    enemy_base = BWTA::getStartLocation(BWAPI::Broodwar->enemy())->getRegion();
+    enemy_base2 = BWTA::getStartLocation(BWAPI::Broodwar->enemy())->getRegion();
   }
-  analyzed   = true;
-  analysis_just_finished = true;
+  analyzed2   = true;
+  analysis_just_finished2 = true;
   return 0;
 }
 

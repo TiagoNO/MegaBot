@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <tchar.h>
 
-#include <../../../BWAPI/include/BWAPI.h>
+#include <BWAPI.h>
 
 #include "PackAndAttack.h"
 namespace BWAPI { Game* Broodwar; }

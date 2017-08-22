@@ -1,13 +1,17 @@
-﻿Build started 10/08/2017 14:35:41.
-     1>Project "C:\software\MegaBot-master\PackAndAttack\PackAndAttack.vcxproj" on node 8 (Build target(s)).
+﻿Build started 22/08/2017 16:29:25.
+     1>Project "C:\Users\Tiago\Desktop\Jogos e programas\GitHub\MegaBotRepository\PackAndAttack\PackAndAttack.vcxproj" on node 8 (Rebuild target(s)).
      1>ClCompile:
-         c:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\CL.exe /c /I../include /Zi /nologo /W3 /WX- /O2 /Oi /Oy- /GL /D WIN32 /D NDEBUG /D _WINDOWS /D _USRDLL /D EXAMPLEAIMODULE_EXPORTS /D "_SECURE_SCL 0" /D _UNICODE /D UNICODE /Gm- /EHsc /MD /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Release\\" /Fd"Release\vc90.pdb" /Gd /TP /analyze- /errorReport:prompt Source\Dll.cpp Source\PackAndAttack.cpp
+         c:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\CL.exe /c /Ic:\software\BWAPI3.7.4/include /Zi /nologo /W3 /WX- /O2 /Oi /Oy- /GL /D WIN32 /D NDEBUG /D _WINDOWS /D _USRDLL /D EXAMPLEAIMODULE_EXPORTS /D "_SECURE_SCL 0" /D _UNICODE /D UNICODE /Gm- /EHsc /MD /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Release\\" /Fd"Release\vc90.pdb" /Gd /TP /analyze- /errorReport:prompt Source\Dll.cpp Source\PackAndAttack.cpp
          Dll.cpp
-     1>c:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\include\../../../BWAPI/include/BWAPI.h(5): fatal error C1083: Cannot open include file: 'BWAPI/InterfaceEvent.h': No such file or directory
          PackAndAttack.cpp
-     1>c:\software\megabot-master\packandattack\source\PackAndAttack.h(3): fatal error C1083: Cannot open include file: 'BWAPI.h': No such file or directory
-     1>Done Building Project "C:\software\MegaBot-master\PackAndAttack\PackAndAttack.vcxproj" (Build target(s)) -- FAILED.
+     1>Source\PackAndAttack.cpp(164): warning C4101: 'aux2' : unreferenced local variable
+     1>Source\PackAndAttack.cpp(165): warning C4101: 'aux' : unreferenced local variable
+       Lib:
+         c:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\Lib.exe /OUT:"C:\Users\Tiago\Desktop\Jogos e programas\GitHub\MegaBotRepository\MegaBot\Release\PackAndAttack-lib.lib" /NOLOGO /LTCG Release\Dll.obj
+         Release\PackAndAttack.obj
+         PackAndAttack.vcxproj -> C:\Users\Tiago\Desktop\Jogos e programas\GitHub\MegaBotRepository\MegaBot\Release\PackAndAttack-lib.lib
+     1>Done Building Project "C:\Users\Tiago\Desktop\Jogos e programas\GitHub\MegaBotRepository\PackAndAttack\PackAndAttack.vcxproj" (Rebuild target(s)).
 
-Build FAILED.
+Build succeeded.
 
-Time Elapsed 00:00:00.26
+Time Elapsed 00:00:03.75

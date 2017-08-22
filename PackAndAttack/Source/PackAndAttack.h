@@ -4,11 +4,11 @@
 #include <BWTA.h>
 #include <windows.h>
 
-extern bool analyzed;
-extern bool analysis_just_finished;
-extern BWTA::Region* home;
-extern BWTA::Region* enemy_base;
-DWORD WINAPI AnalyzeThread();
+extern bool analyzed2;
+extern bool analysis_just_finished2;
+extern BWTA::Region* home2;
+extern BWTA::Region* enemy_base2;
+DWORD WINAPI AnalyzeThread2();
 
 class PackAndAttack : public BWAPI::AIModule
 {
