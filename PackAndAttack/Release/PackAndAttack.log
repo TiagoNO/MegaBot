@@ -1,5 +1,5 @@
-﻿Build started 22/08/2017 16:29:25.
-     1>Project "C:\Users\Tiago\Desktop\Jogos e programas\GitHub\MegaBotRepository\PackAndAttack\PackAndAttack.vcxproj" on node 8 (Rebuild target(s)).
+﻿Build started 25/08/2017 15:00:47.
+     1>Project "C:\Users\Tiago\Desktop\Jogos e programas\GitHub\MegaBotRepository\PackAndAttack\PackAndAttack.vcxproj" on node 6 (Rebuild target(s)).
      1>ClCompile:
          c:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\CL.exe /c /Ic:\software\BWAPI3.7.4/include /Zi /nologo /W3 /WX- /O2 /Oi /Oy- /GL /D WIN32 /D NDEBUG /D _WINDOWS /D _USRDLL /D EXAMPLEAIMODULE_EXPORTS /D "_SECURE_SCL 0" /D _UNICODE /D UNICODE /Gm- /EHsc /MD /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Release\\" /Fd"Release\vc90.pdb" /Gd /TP /analyze- /errorReport:prompt Source\Dll.cpp Source\PackAndAttack.cpp
          Dll.cpp
@@ -14,4 +14,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:03.75
+Time Elapsed 00:00:04.60
