@@ -1,5 +1,5 @@
-﻿Build started 22/08/2017 16:29:25.
-     1>Project "C:\Users\Tiago\Desktop\Jogos e programas\GitHub\MegaBotRepository\Explore\Explore-lib.vcxproj" on node 9 (Rebuild target(s)).
+﻿Build started 25/08/2017 15:00:47.
+     1>Project "C:\Users\Tiago\Desktop\Jogos e programas\GitHub\MegaBotRepository\Explore\Explore-lib.vcxproj" on node 7 (Rebuild target(s)).
        Project file contains ToolsVersion="12.0". This toolset may be unknown or missing, in which case you may be able to resolve this by installing the appropriate version of MSBuild, or the build may have been forced to a particular ToolsVersion for policy reasons. Treating the project as if it had ToolsVersion="4.0". For more information, please see http://go.microsoft.com/fwlink/?LinkId=291333.
      1>ClCompile:
          c:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\CL.exe /c /I../include /Ic:\software\BWAPI3.7.4/include /Ic:\software\boost /Zi /nologo /W3 /WX- /O2 /Oi /Oy- /GL /D WIN32 /D NDEBUG /D _WINDOWS /D _USRDLL /D EXAMPLEAIMODULE_EXPORTS /D _UNICODE /D UNICODE /Gm- /EHsc /MD /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Release\\" /Fd"Release\vc90.pdb" /Gd /TP /analyze- /errorReport:prompt Source\Dll.cpp Source\Explore.cpp
@@ -13,4 +13,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:04.08
+Time Elapsed 00:00:04.52
