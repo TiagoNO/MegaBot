@@ -64,10 +64,14 @@ public:
 
 	string ChooseNewBerravior(BWAPI::AIModule* currentStrategy);
 
+	AIModule* MetaStrategy::randomUniformBegin();
+
 	int getLastFrameNode();
 
 	/** Returns active behavior name */
 	string getCurrentStrategyName();
+
+	void MetaStrategy::Imprime();
 
 	/** Acts every frame (may switch strategy or not) */
 	virtual void onFrame() {}

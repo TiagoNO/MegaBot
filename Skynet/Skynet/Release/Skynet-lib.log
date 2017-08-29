@@ -1,0 +1,191 @@
+﻿Build started 25/08/2017 15:00:47.
+     1>Project "C:\Users\Tiago\Desktop\Jogos e programas\GitHub\MegaBotRepository\Skynet\Skynet\Skynet-lib.vcxproj" on node 4 (Rebuild target(s)).
+     1>ClCompile:
+         c:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\CL.exe /c /Ic:\software\BWAPI3.7.4\include\ /Ic:\software\boost\ /Zi /nologo /W3 /WX- /Ox /Oi /Ot /Oy- /GL /D WIN32 /D NDEBUG /D _WINDOWS /D _USRDLL /D SKYNET_EXPORTS /D _MBCS /Gm- /EHsc /MD /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Release\\" /Fd"Release\vc90.pdb" /Gd /TP /analyze- /errorReport:prompt DLL.cpp ExpansionManager.cpp GameMemory.cpp GameProgressDetection.cpp LatencyTracker.cpp MacroManager.cpp PlayerTracker.cpp PylonPowerTracker.cpp ResourceManager.cpp Skynet.cpp SupplyManager.cpp WallTracker.cpp DrawBuffer.cpp DrawingHelper.cpp Chokepoint.cpp Region.cpp TerrainAnaysis.cpp Base.cpp BaseTracker.cpp MapHelper.cpp UnitHelper.cpp Requirement.cpp RequirementGroup.cpp ResourceTracker.cpp TaskManager.cpp TaskPump.cpp ConstructionTask.cpp GatherTask.cpp IdleTask.cpp MorphTask.cpp TechTask.cpp TrainTask.cpp UpgradeTask.cpp Unit.cpp UnitGroup.cpp UnitInformation.cpp UnitPredictor.cpp UnitTracker.cpp BuildingPlacer.cpp ReservedLocation.cpp BuildOrder.cpp BuildOrderManager.cpp LoadOtherBuilds.cpp LoadProtossBuilds.cpp LoadTerranBuilds.cpp LoadZergBuilds.cpp BorderPosition.cpp BorderTracker.cpp ObserverScoutTask.cpp ScoutData.cpp ScoutManager.cpp WorkerScoutTask.cpp Behaviour.cpp Goal.cpp SquadManager.cpp ArbiterAction.cpp ArconZealotKillUnDetected.cpp BasicUnitAction.cpp DetectorAction.cpp DropAction.cpp GoalAction.cpp MineDragAction.cpp PsiStormAction.cpp TrainInterceptorAction.cpp TrainScarabAction.cpp AdvancedGroup.cpp DefaultSquad.cpp DefenseSquad.cpp BuildTilePath.cpp PathFinder.cpp PositionPath.cpp RegionPath.cpp WalkPositionPath.cpp AOEThreat.cpp AOEThreatTracker.cpp Condition.cpp UnitFilter.cpp BlockedPathManager.cpp MineBlockingMineralTask.cpp
+         DLL.cpp
+         ExpansionManager.cpp
+         GameMemory.cpp
+         GameProgressDetection.cpp
+         LatencyTracker.cpp
+         MacroManager.cpp
+         PlayerTracker.cpp
+         PylonPowerTracker.cpp
+         ResourceManager.cpp
+         Skynet.cpp
+         SupplyManager.cpp
+         WallTracker.cpp
+         DrawBuffer.cpp
+         DrawingHelper.cpp
+         Chokepoint.cpp
+         Region.cpp
+         TerrainAnaysis.cpp
+         Base.cpp
+         BaseTracker.cpp
+         MapHelper.cpp
+         Compiling...
+         UnitHelper.cpp
+         Requirement.cpp
+         RequirementGroup.cpp
+         ResourceTracker.cpp
+         TaskManager.cpp
+         TaskPump.cpp
+         ConstructionTask.cpp
+         GatherTask.cpp
+         IdleTask.cpp
+         MorphTask.cpp
+         TechTask.cpp
+         TrainTask.cpp
+         UpgradeTask.cpp
+         Unit.cpp
+         UnitGroup.cpp
+         UnitInformation.cpp
+         UnitPredictor.cpp
+         UnitTracker.cpp
+         BuildingPlacer.cpp
+         ReservedLocation.cpp
+         Compiling...
+         BuildOrder.cpp
+         BuildOrderManager.cpp
+     1>c:\software\boost\boost/random/detail/polynomial.hpp(114): warning C4996: 'std::fill_n': Function call with parameters that may be unsafe - this call relies on the caller to check that the passed values are correct. To disable this warning, use -D_SCL_SECURE_NO_WARNINGS. See documentation on how to use Visual C++ 'Checked Iterators'
+                 c:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\include\xutility(3283) : see declaration of 'std::fill_n'
+     1>c:\software\boost\boost/random/detail/polynomial.hpp(256): warning C4996: 'std::fill_n': Function call with parameters that may be unsafe - this call relies on the caller to check that the passed values are correct. To disable this warning, use -D_SCL_SECURE_NO_WARNINGS. See documentation on how to use Visual C++ 'Checked Iterators'
+                 c:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\include\xutility(3283) : see declaration of 'std::fill_n'
+     1>c:\software\boost\boost/random/detail/polynomial.hpp(264): warning C4996: 'std::fill_n': Function call with parameters that may be unsafe - this call relies on the caller to check that the passed values are correct. To disable this warning, use -D_SCL_SECURE_NO_WARNINGS. See documentation on how to use Visual C++ 'Checked Iterators'
+                 c:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\include\xutility(3283) : see declaration of 'std::fill_n'
+         LoadOtherBuilds.cpp
+         LoadProtossBuilds.cpp
+         LoadTerranBuilds.cpp
+         LoadZergBuilds.cpp
+         BorderPosition.cpp
+         BorderTracker.cpp
+         ObserverScoutTask.cpp
+         ScoutData.cpp
+         ScoutManager.cpp
+         WorkerScoutTask.cpp
+         Behaviour.cpp
+         Goal.cpp
+         SquadManager.cpp
+         ArbiterAction.cpp
+         ArconZealotKillUnDetected.cpp
+         BasicUnitAction.cpp
+         DetectorAction.cpp
+         DropAction.cpp
+         Compiling...
+         GoalAction.cpp
+         MineDragAction.cpp
+         PsiStormAction.cpp
+         TrainInterceptorAction.cpp
+         TrainScarabAction.cpp
+         AdvancedGroup.cpp
+         DefaultSquad.cpp
+         DefenseSquad.cpp
+         BuildTilePath.cpp
+         PathFinder.cpp
+         PositionPath.cpp
+         RegionPath.cpp
+         WalkPositionPath.cpp
+         AOEThreat.cpp
+         AOEThreatTracker.cpp
+         Condition.cpp
+     1>c:\software\boost\boost/random/detail/polynomial.hpp(114): warning C4996: 'std::fill_n': Function call with parameters that may be unsafe - this call relies on the caller to check that the passed values are correct. To disable this warning, use -D_SCL_SECURE_NO_WARNINGS. See documentation on how to use Visual C++ 'Checked Iterators'
+                 c:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\include\xutility(3283) : see declaration of 'std::fill_n'
+     1>c:\software\boost\boost/random/detail/polynomial.hpp(256): warning C4996: 'std::fill_n': Function call with parameters that may be unsafe - this call relies on the caller to check that the passed values are correct. To disable this warning, use -D_SCL_SECURE_NO_WARNINGS. See documentation on how to use Visual C++ 'Checked Iterators'
+                 c:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\include\xutility(3283) : see declaration of 'std::fill_n'
+     1>c:\software\boost\boost/random/detail/polynomial.hpp(264): warning C4996: 'std::fill_n': Function call with parameters that may be unsafe - this call relies on the caller to check that the passed values are correct. To disable this warning, use -D_SCL_SECURE_NO_WARNINGS. See documentation on how to use Visual C++ 'Checked Iterators'
+                 c:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\include\xutility(3283) : see declaration of 'std::fill_n'
+         UnitFilter.cpp
+         BlockedPathManager.cpp
+         MineBlockingMineralTask.cpp
+       Lib:
+         c:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\Lib.exe /OUT:"C:\Users\Tiago\Desktop\Jogos e programas\GitHub\MegaBotRepository\MegaBot\Release\Skynet-lib.lib" /NOLOGO /LTCG Release\DLL.obj
+         Release\ExpansionManager.obj
+         Release\GameMemory.obj
+         Release\GameProgressDetection.obj
+         Release\LatencyTracker.obj
+         Release\MacroManager.obj
+         Release\PlayerTracker.obj
+         Release\PylonPowerTracker.obj
+         Release\ResourceManager.obj
+         Release\Skynet.obj
+         Release\SupplyManager.obj
+         Release\WallTracker.obj
+         Release\DrawBuffer.obj
+         Release\DrawingHelper.obj
+         Release\Chokepoint.obj
+         Release\Region.obj
+         Release\TerrainAnaysis.obj
+         Release\Base.obj
+         Release\BaseTracker.obj
+         Release\MapHelper.obj
+         Release\UnitHelper.obj
+         Release\Requirement.obj
+         Release\RequirementGroup.obj
+         Release\ResourceTracker.obj
+         Release\TaskManager.obj
+         Release\TaskPump.obj
+         Release\ConstructionTask.obj
+         Release\GatherTask.obj
+         Release\IdleTask.obj
+         Release\MorphTask.obj
+         Release\TechTask.obj
+         Release\TrainTask.obj
+         Release\UpgradeTask.obj
+         Release\Unit.obj
+         Release\UnitGroup.obj
+         Release\UnitInformation.obj
+         Release\UnitPredictor.obj
+         Release\UnitTracker.obj
+         Release\BuildingPlacer.obj
+         Release\ReservedLocation.obj
+         Release\BuildOrder.obj
+         Release\BuildOrderManager.obj
+         Release\LoadOtherBuilds.obj
+         Release\LoadProtossBuilds.obj
+         Release\LoadTerranBuilds.obj
+         Release\LoadZergBuilds.obj
+         Release\BorderPosition.obj
+         Release\BorderTracker.obj
+         Release\ObserverScoutTask.obj
+         Release\ScoutData.obj
+         Release\ScoutManager.obj
+         Release\WorkerScoutTask.obj
+         Release\Behaviour.obj
+         Release\Goal.obj
+         Release\SquadManager.obj
+         Release\ArbiterAction.obj
+         Release\ArconZealotKillUnDetected.obj
+         Release\BasicUnitAction.obj
+         Release\DetectorAction.obj
+         Release\DropAction.obj
+         Release\GoalAction.obj
+         Release\MineDragAction.obj
+         Release\PsiStormAction.obj
+         Release\TrainInterceptorAction.obj
+         Release\TrainScarabAction.obj
+         Release\AdvancedGroup.obj
+         Release\DefaultSquad.obj
+         Release\DefenseSquad.obj
+         Release\BuildTilePath.obj
+         Release\PathFinder.obj
+         Release\PositionPath.obj
+         Release\RegionPath.obj
+         Release\WalkPositionPath.obj
+         Release\AOEThreat.obj
+         Release\AOEThreatTracker.obj
+         Release\Condition.obj
+         Release\UnitFilter.obj
+         Release\BlockedPathManager.obj
+         Release\MineBlockingMineralTask.obj
+         Skynet-lib.vcxproj -> C:\Users\Tiago\Desktop\Jogos e programas\GitHub\MegaBotRepository\MegaBot\Release\Skynet-lib.lib
+       PostBuildEvent:
+         if not "%BWAPIData%" == "" (
+         copy "C:\Users\Tiago\Desktop\Jogos e programas\GitHub\MegaBotRepository\MegaBot\Release\Skynet-lib.lib" "%BWAPIData%\AI\"
+         copy "..\bwapi.ini" "%BWAPIData%"
+         )
+         
+         :VCEnd
+     1>Done Building Project "C:\Users\Tiago\Desktop\Jogos e programas\GitHub\MegaBotRepository\Skynet\Skynet\Skynet-lib.vcxproj" (Rebuild target(s)).
+
+Build succeeded.
+
+Time Elapsed 00:04:46.87

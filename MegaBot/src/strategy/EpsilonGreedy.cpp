@@ -37,11 +37,10 @@ void EpsilonGreedy::onStart() {
     double epsilon = Configuration::getInstance()->epsilon; //alias for easy reading
     if (lucky < epsilon) {
 		Logging::getInstance()->log(
-            "Choosing randomly: (%.3f < %.3f)", lucky, epsilon
-        );
+            "Choosing randomly: (%.3f < %.3f)", lucky, epsilon);
 		name += " - random choice";
-		currentStrategy = randomUniform();
-    }
+		currentStrategy = randomUniformBegin();
+	}
     else {
         Logging::getInstance()->log(
             "Choosing greedily: (%.3f > %.3f)", lucky, epsilon
@@ -64,7 +63,7 @@ void EpsilonGreedy::onStart() {
 				frameNode = rootNode->FirstChildElement("frame");
 				if(frameNode == NULL)
 				{
-					currentStrategy = randomUniform();
+					currentStrategy = randomUniformBegin();
 					frameNode->SetAttribute("value",0);
 				}
 				else
@@ -77,20 +76,19 @@ void EpsilonGreedy::onStart() {
 					scoresMap[MetaStrategy::NUSBot] = 0;
 					scoresMap[MetaStrategy::SKYNET] = 0;
 					scoresMap[MetaStrategy::XELNAGA] = 0;
-					scoresMap[MetaStrategy::EXPAND] = 0;
-					scoresMap[MetaStrategy::EXPLORE] = 0;
-					scoresMap[MetaStrategy::PACKANDATTACK] = 0;
 
 					while (candidate != NULL) {
 						float score = -FLT_MAX;
 						candidate->QueryFloatText(&score);
-
-						scoresMap[candidate->Name()] = score;
+						if(candidate->Name() != "Expand" && candidate->Name() != "Explore" && candidate->Name() != "PackAndAttack")
+						{
+							scoresMap[candidate->Name()] = score;
+						}
 						candidate = candidate->NextSiblingElement();
 					}
 
 					for (std::map<string, float>::iterator it = scoresMap.begin(); it != scoresMap.end(); ++it) {
-						if (it->second > best_score) {
+						if (it->second > best_score && it->first.c_str() != "Expand" && it->first.c_str() != "Explore" && it->first.c_str() != "PackAndAttack") {
 							best_name = it->first;
 							best_score = it->second;
 						}
@@ -99,7 +97,7 @@ void EpsilonGreedy::onStart() {
 					if (best_name.empty()) {
 						Logging::getInstance()->log("Best strategy could not be determined. Choosing randomly");
 						name += " failed. Best score not found";
-						currentStrategy = randomUniform();
+						currentStrategy = randomUniformBegin();
 					}
 					else {
 						currentStrategy = portfolio[best_name];
@@ -109,8 +107,8 @@ void EpsilonGreedy::onStart() {
             else {
                 Logging::getInstance()->log("Enemy information not found, choosing strategy randomly");
 				name += " failed. Enemy info not found";
-                currentStrategy = randomUniform();
-            }
+				currentStrategy = randomUniformBegin();
+	        }
         }
         else { //prints error
             Logging::getInstance()->log(
@@ -119,7 +117,7 @@ void EpsilonGreedy::onStart() {
                 doc.ErrorName()
             );
 			name += " failed. File not found?";
-            currentStrategy = randomUniform();
+			currentStrategy = randomUniformBegin();
         }
 	}
 	Logging::getInstance()->log("%s: onStart() - executed in EpsilonGreedy::onStart", getCurrentStrategyName().c_str());

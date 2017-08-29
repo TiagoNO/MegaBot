@@ -175,9 +175,34 @@ void MatchData::writeDetailedResult() {
 			 frameNode->InsertFirstChild(myBehvNode);
 		}
 		else {
-			 myBehvNode->QueryFloatText(&oldScore);
-			 score = (1 - alpha)*oldScore + alpha*result_value;
-			 myBehvNode->SetText(score);
+			XMLElement *NextState;
+			NextState = frameNode->NextSiblingElement("frame");
+			if(NextState == NULL)
+			{
+				 myBehvNode->QueryFloatText(&oldScore);
+				 score = (1 - alpha)*oldScore + alpha*result_value;
+				 myBehvNode->SetText(score);
+			}
+			else
+			{
+				XMLElement *NextStateScore;
+				NextStateScore = NextState->FirstChildElement(myBehaviorName.c_str());
+				if(NextStateScore == NULL)
+				{
+					 myBehvNode->QueryFloatText(&oldScore);
+					 score = (1 - alpha)*oldScore + alpha*result_value;
+					 myBehvNode->SetText(score);
+					 NextStateScore = doc.NewElement(myBehaviorName.c_str());
+					 NextStateScore->SetText(0);
+					 NextState->InsertEndChild(NextStateScore);
+				}
+				else
+				{
+					NextStateScore->QueryFloatText(&oldScore);
+					score = (1 - alpha)*oldScore + alpha*result_value;
+					myBehvNode->SetText(score);
+				}
+			}
 		}
 	}
 	else
