@@ -112,15 +112,16 @@ void MegaBot::onEnd(bool isWinner) {
 
 void MegaBot::onFrame() {
 
-	if(Broodwar->getFrameCount() >= metaStrategy->getLastFrameNode() + 4286) // in every 3 minutes, the megabot picks a new berravior
-	{
-		Broodwar->sendText("Changing Strategy... (in minute %i)",Broodwar->elapsedTime()/60);
+	if (Broodwar->getFrameCount() == 0) {
+		logger->log("BEGIN: first onFrame.");
+	}
+
+	if(Broodwar->getFrameCount() >= metaStrategy->getLastFrameNode() + 4286){ // every 3 minutes, the megabot picks a new behavior
+		logger->log("Changing Strategy... (in minute %i)", Broodwar->elapsedTime() / 60);
 		metaStrategy->chooseNewBehavior(currentStrategy);
 		MatchData::getInstance()->registerMyBehaviorName(metaStrategy->getCurrentStrategyName().c_str());
 	}
-	if(Broodwar->getFrameCount() == 0){
-		logger->log("BEGIN: first onFrame.");
-	}
+	
 	//just prints 'Alive...' so that we know things are ok
 	if (Broodwar->getFrameCount() % 100 == 0) {
 		Logging::getInstance()->log("Alive...");
@@ -133,7 +134,8 @@ void MegaBot::onFrame() {
     }
 
 	if(Broodwar->getFrameCount() == 0){ logger->log("first metaStrategy->onFrame()"); }
-		metaStrategy->onFrame();	//might switch strategy so I update currentStrategy below
+	
+	metaStrategy->onFrame();	//might switch strategy so I update currentStrategy below
 
 	if(Broodwar->getFrameCount() == 0){ logger->log("first strategy->onFrame()"); }
 	currentStrategy = metaStrategy->getCurrentStrategy();

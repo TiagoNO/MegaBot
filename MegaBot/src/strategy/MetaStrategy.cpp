@@ -224,29 +224,24 @@ string MetaStrategy::chooseNewBehavior(BWAPI::AIModule* currentStrategy)
     }
 
 	frameNode = rootNode->FirstChildElement("frame");
-	while(frameNode != NULL)
-	{
-		if(frameNode->Attribute("value") != NULL && frameNode->Attribute("value") == (const char*)(Broodwar->getFrameCount()))
-		{
+	while(frameNode != NULL) {
+		if(frameNode->Attribute("value") != NULL && frameNode->Attribute("value") == (const char*)(Broodwar->getFrameCount())) {
 			break;
 		}
 		frameNode = frameNode->NextSiblingElement("frame");
 	}
-	if(frameNode == NULL)
-	{
+	if(frameNode == NULL) {
 		frameNode = doc.NewElement("frame");
 		frameNode->SetAttribute("value",Broodwar->getFrameCount());
 		rootNode->InsertEndChild(frameNode);
 		forceStrategy("random");
 		myBehvNode = doc.NewElement(getCurrentStrategyName().c_str());
-		myBehvNode->SetAttribute("value",0);
+		myBehvNode->SetAttribute("value", 0);
 		frameNode->InsertFirstChild(myBehvNode);
 	}
-	else
-	{
+	else {
 		myBehvNode = frameNode->FirstChildElement();
-		if (myBehvNode == NULL) 
-		{
+		if (myBehvNode == NULL) {
 			forceStrategy("random");
 			myBehvNode = doc.NewElement(getCurrentStrategyName().c_str());
 			myBehvNode->SetAttribute("value",0);
@@ -256,10 +251,8 @@ string MetaStrategy::chooseNewBehavior(BWAPI::AIModule* currentStrategy)
 			float bigger = -1.0f;
 			string BotName =  "Skynet";
 			float score = -FLT_MAX;
-			while(myBehvNode != NULL)
-			{
-				if(bigger < myBehvNode->FloatAttribute("value"))
-				{
+			while(myBehvNode != NULL){
+				if(bigger < myBehvNode->FloatAttribute("value")) {
 					bigger = myBehvNode->FloatAttribute("value");
 					BotName = myBehvNode->Name();
 				}
