@@ -2,7 +2,7 @@
 #include "../utils/tinyxml2.h"
 #include "../utils/Logging.h"
 #include "MetaStrategy.h"
-#include "EpsilonGreedy.h"
+#include "EpsilonGreedyOnce.h"
 #include "Probabilistic.h"
 #include "RandomSwitch.h"
 #include "SingleChoice.h"
@@ -19,7 +19,7 @@ MetaStrategy* MetaStrategyManager::getMetaStrategy(){
 		Logging::getInstance()->log("Meta strategy: %s", metaStrategyName.c_str());
 
 		if (metaStrategyName == "epsilon-greedy") {
-			activeMetaStrategy = new EpsilonGreedy();
+			activeMetaStrategy = new EpsilonGreedyOnce();
 		}
 		else if (metaStrategyName == "probabilistic") {
 			activeMetaStrategy = new Probabilistic();
@@ -32,7 +32,7 @@ MetaStrategy* MetaStrategyManager::getMetaStrategy(){
 			Logging::getInstance()->log("Using SingleChoice with strategy: %s", metaStrategyName.c_str());
 			activeMetaStrategy = new SingleChoice(metaStrategyName);
 		}
-		//return new EpsilonGreedy();	//failsafe default...
+		//return new EpsilonGreedyOnce();	//failsafe default...
 	}
 
 	return activeMetaStrategy;

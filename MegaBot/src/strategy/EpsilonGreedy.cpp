@@ -1,4 +1,4 @@
-#include "EpsilonGreedy.h"
+#include "EpsilonGreedyOnce.h"
 #include <BWAPI.h>
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_real_distribution.hpp>
@@ -9,25 +9,25 @@
 using namespace tinyxml2;
 using namespace BWAPI;
 
-EpsilonGreedy::EpsilonGreedy(void) : MetaStrategy() {
+EpsilonGreedyOnce::EpsilonGreedyOnce(void) : MetaStrategy() {
 	name = "Epsilon-greedy";
 	srand(time(NULL));
 }
 
 
-EpsilonGreedy::~EpsilonGreedy(void) {
+EpsilonGreedyOnce::~EpsilonGreedyOnce(void) {
 }
 
 /**
  * Performs epsilon-greedy selection of strategy
  */ 
-void EpsilonGreedy::onStart() {
+void EpsilonGreedyOnce::onStart() {
 
 	boost::random::mt19937 gen(static_cast<unsigned int>(std::time(0)));
     boost::random::uniform_real_distribution<> dist(0.0, 1.0);
 
 	Logging::getInstance()->log(
-        "EpsilonGreedy parameters: alpha=%.2f; epsilon=%.2f.",
+        "EpsilonGreedyOnce parameters: alpha=%.2f; epsilon=%.2f.",
         Configuration::getInstance()->alpha,
         Configuration::getInstance()->epsilon
     );
@@ -120,11 +120,11 @@ void EpsilonGreedy::onStart() {
 			currentStrategy = randomUniformBegin();
         }
 	}
-	Logging::getInstance()->log("%s: onStart() - executed in EpsilonGreedy::onStart", getCurrentStrategyName().c_str());
+	Logging::getInstance()->log("%s: onStart() - executed in EpsilonGreedyOnce::onStart", getCurrentStrategyName().c_str());
 	currentStrategy->onStart();
 }
 
-void EpsilonGreedy::onFrame() {
+void EpsilonGreedyOnce::onFrame() {
     return; //does nothing, because epsilon-greedy does not change strategy during the match
 
 	/*
@@ -153,7 +153,7 @@ void EpsilonGreedy::onFrame() {
 	*/
 }
 
-void EpsilonGreedy::discountCrashes() {
+void EpsilonGreedyOnce::discountCrashes() {
     using namespace tinyxml2;
 
     //file to read is MegaBot-vs-enemy.xml

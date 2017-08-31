@@ -16,7 +16,7 @@
 #include "../utils/tinyxml2.h"
 #include "../utils/Logging.h"
 #include "../data/MatchData.h"
-#include "EpsilonGreedy.h"
+#include "EpsilonGreedyOnce.h"
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_real_distribution.hpp>
 
