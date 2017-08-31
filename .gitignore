@@ -1,0 +1,12 @@
+*.obj
+/MegaBot/Debug/*.tlog
+*.lib
+/MegaBot/Debug/*.log
+/MegaBot/Debug/*.manifest
+/MegaBot/Debug/*.res
+*.suo
+*.sdf
+*.opensdf
+*.idb
+*.pdb
+*.tlog
