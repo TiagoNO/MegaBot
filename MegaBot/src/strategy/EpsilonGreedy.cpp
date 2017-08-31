@@ -21,9 +21,10 @@ EpsilonGreedy::~EpsilonGreedy(void) {
 
 
 void EpsilonGreedy::onFrame() {
-	Logging* logger = Logging::getInstance();
 	if (Broodwar->getFrameCount() >= lastFrameChecked + 4286) { // every 3 minutes picks a new behavior
-		logger->log("Changing Strategy... (in minute %i)", Broodwar->elapsedTime() / 60);
+		Logging::getInstance()->log(
+			"Selecting behavior (in minute %d)", Broodwar->elapsedTime() / 60
+		);
 		chooseNewBehavior(currentStrategy);
 		MatchData::getInstance()->registerMyBehaviorName(getCurrentStrategyName().c_str());
 	}
@@ -31,12 +32,6 @@ void EpsilonGreedy::onFrame() {
 
 void EpsilonGreedy::chooseNewBehavior(BWAPI::AIModule* currentStrategy) {
 	using namespace tinyxml2;
-
-
-	/* DEBUG
-	ofstream outFile;
-	outFile.open("bwapi-data/write/dbg.txt", ios::out | ios::app);
-	*/
 
 	XMLElement* rootNode;
 	XMLElement* myBehvNode;
@@ -46,12 +41,10 @@ void EpsilonGreedy::chooseNewBehavior(BWAPI::AIModule* currentStrategy) {
 	string inputFile = Configuration::getInstance()->enemyInformationInputFile();
 	string outputFile = Configuration::getInstance()->enemyInformationOutputFile();
 
-	//const char* filename = Configuration::getInstance()->readDataFile.c_str();
-
 	tinyxml2::XMLDocument doc;
 	XMLError input_result = doc.LoadFile(inputFile.c_str());
 
-	// if file was not found, ok, we create a node and fill information in it
+	// if file was not found, we create a node and fill information in it
 	if (input_result == XML_ERROR_FILE_NOT_FOUND) {
 		rootNode = doc.NewElement("scores");
 		doc.InsertFirstChild(rootNode);
@@ -59,13 +52,11 @@ void EpsilonGreedy::chooseNewBehavior(BWAPI::AIModule* currentStrategy) {
 	// if another error occurred, we're in trouble =/
 	else if (input_result != XML_NO_ERROR) {
 
-		/*Broodwar->printf(
-		"Error while parsing the configuration file '%s'. Error: '%s'",
-		inputFile,
-		doc.ErrorName()
-		);*/
-
-
+		Logging::getInstance()->log(
+			"Error while parsing file '%s'. Won't switch behavior. Error: '%s'",
+			inputFile,
+			doc.ErrorName()
+		);
 		return;
 	}
 	else { //no error, goes after root node
@@ -77,43 +68,60 @@ void EpsilonGreedy::chooseNewBehavior(BWAPI::AIModule* currentStrategy) {
 	}
 
 	frameNode = rootNode->FirstChildElement("frame");
+	// traverses frame nodes until finds one corresponding to the current frame
+	// (or gets null to create a new one)
 	while (frameNode != NULL) {
-		if (frameNode->Attribute("value") != NULL && frameNode->Attribute("value") == (const char*)(Broodwar->getFrameCount())) {
+		if (frameNode->Attribute("value") != NULL && frameNode->IntAttribute("value") == Broodwar->getFrameCount()) {
+			// found a node corresponding to the current frame
+			Logging::getInstance()->log(
+				"Found scores at frame %d", frameNode->IntAttribute("value")
+			);
 			break;
 		}
 		frameNode = frameNode->NextSiblingElement("frame");
 	}
 	if (frameNode == NULL) {
+		// node with current frame not found, create a new one
 		frameNode = doc.NewElement("frame");
 		frameNode->SetAttribute("value", Broodwar->getFrameCount());
 		rootNode->InsertEndChild(frameNode);
+
+		// selects a strategy at random and initializes its value as zero
+		forceStrategy("random");
+		myBehvNode = doc.NewElement(getCurrentStrategyName().c_str());
+		myBehvNode->SetAttribute("value", 0);
+		frameNode->InsertFirstChild(myBehvNode);
+	}
+	
+	// checks for behavior scores
+	myBehvNode = frameNode->FirstChildElement();
+	if (myBehvNode == NULL) {
+		// if the frame node has no child, select a random behavior
+		// and initializes its value with zero
+		// TODO: must initialize values of all behaviors to zero,
+		// this would mitigate issue [1] bellow
 		forceStrategy("random");
 		myBehvNode = doc.NewElement(getCurrentStrategyName().c_str());
 		myBehvNode->SetAttribute("value", 0);
 		frameNode->InsertFirstChild(myBehvNode);
 	}
 	else {
-		myBehvNode = frameNode->FirstChildElement();
-		if (myBehvNode == NULL) {
-			forceStrategy("random");
-			myBehvNode = doc.NewElement(getCurrentStrategyName().c_str());
-			myBehvNode->SetAttribute("value", 0);
-			frameNode->InsertFirstChild(myBehvNode);
-		}
-		else {
-			float bigger = -1.0f;
-			string BotName = "Skynet";
-			float score = -FLT_MAX;
-			while (myBehvNode != NULL) {
-				if (bigger < myBehvNode->FloatAttribute("value")) {
-					bigger = myBehvNode->FloatAttribute("value");
-					BotName = myBehvNode->Name();
-				}
-				myBehvNode = myBehvNode->NextSiblingElement();
+		// frame node has children, select amongst the highest scores
+		// TODO: there is no epsilon here!
+		// [1] TODO: potential problem: what if the node has only one child?
+		float bigger = -1.0f;
+		string BotName = "Skynet";
+		float score = -FLT_MAX;
+		while (myBehvNode != NULL) {
+			if (bigger < myBehvNode->FloatAttribute("value")) {
+				bigger = myBehvNode->FloatAttribute("value");
+				BotName = myBehvNode->Name();
 			}
-			forceStrategy(BotName);
+			myBehvNode = myBehvNode->NextSiblingElement();
 		}
+		forceStrategy(BotName);
 	}
+	
 	lastFrameChecked = Broodwar->getFrameCount();
 	doc.SaveFile(outputFile.c_str());
 	doc.SaveFile(inputFile.c_str());

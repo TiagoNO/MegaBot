@@ -61,13 +61,11 @@ void EpsilonGreedyOnce::onStart() {
 
             if (rootNode != NULL) {
 				frameNode = rootNode->FirstChildElement("frame");
-				if(frameNode == NULL)
-				{
+				if(frameNode == NULL){
 					currentStrategy = randomUniformBegin();
 					frameNode->SetAttribute("value",0);
 				}
-				else
-				{
+				else {
 					XMLElement* candidate = frameNode->FirstChildElement();
 					string best_name;
 					float best_score = -1.0f;
@@ -95,7 +93,9 @@ void EpsilonGreedyOnce::onStart() {
 					}
 
 					if (best_name.empty()) {
-						Logging::getInstance()->log("Best strategy could not be determined. Choosing randomly");
+						Logging::getInstance()->log(
+							"Best strategy could not be determined. Choosing randomly"
+						);
 						name += " failed. Best score not found";
 						currentStrategy = randomUniformBegin();
 					}
@@ -105,7 +105,9 @@ void EpsilonGreedyOnce::onStart() {
 				}
             }
             else {
-                Logging::getInstance()->log("Enemy information not found, choosing strategy randomly");
+                Logging::getInstance()->log(
+					"Enemy information not found, choosing strategy randomly"
+				);
 				name += " failed. Enemy info not found";
 				currentStrategy = randomUniformBegin();
 	        }
@@ -120,37 +122,15 @@ void EpsilonGreedyOnce::onStart() {
 			currentStrategy = randomUniformBegin();
         }
 	}
-	Logging::getInstance()->log("%s: onStart() - executed in EpsilonGreedyOnce::onStart", getCurrentStrategyName().c_str());
+	Logging::getInstance()->log(
+		"%s: onStart() - executed in EpsilonGreedyOnce::onStart", getCurrentStrategyName().c_str()
+	);
+	//TODO: maybe the call below is unecessary: all behaviors have been initializes, right?
 	currentStrategy->onStart();
 }
 
 void EpsilonGreedyOnce::onFrame() {
-    return; //does nothing, because epsilon-greedy does not change strategy during the match
-
-	/*
-	int thisFrame = Broodwar->getFrameCount();
-    myBehaviorName = MetaStrategy::getInstance()->getStrategy();
-
-    MatchData::getInstance()->registerMyBehaviorName(myBehaviorName);
-    currentBehavior = behaviors[myBehaviorName];
-    currentBehavior->onFrame();
-    logger->log("%s on!", myBehaviorName.c_str());
-
-    if (Broodwar->elapsedTime() / 60 >= 81) {	//leave stalled game
-        Broodwar->leaveGame();
-        return;
-    }
-
-    currentBehavior->onFrame();
-	
-    //draws some text
-    Broodwar->drawTextScreen(240, 20, "\x0F MegaBot v1.0.2");
-    Broodwar->drawTextScreen(240, 35, "\x0F Strategy: %s", myBehaviorName.c_str());
-    //Broodwar->drawTextScreen(5, 25, "\x0F Enemy behavior: %s", enemyBehaviorName.c_str());
-    Broodwar->drawTextScreen(240, 45, "\x0F Enemy: %s", Broodwar->enemy()->getName().c_str());
-    Broodwar->drawTextScreen(240, 60, "Frame count %d.", thisFrame);
-    Broodwar->drawTextScreen(240, 75, "Seconds: %d.", Broodwar->elapsedTime());
-	*/
+    return; //EpsilonGreedyOnce does not change strategy during the match
 }
 
 void EpsilonGreedyOnce::discountCrashes() {
