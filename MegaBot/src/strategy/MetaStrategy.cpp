@@ -179,7 +179,7 @@ AIModule* MetaStrategy::randomUniformBegin() {
 		}
 }
 
-string MetaStrategy::ChooseNewBerravior(BWAPI::AIModule* currentStrategy)
+string MetaStrategy::chooseNewBehavior(BWAPI::AIModule* currentStrategy)
 {
     using namespace tinyxml2;
 

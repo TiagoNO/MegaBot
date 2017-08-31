@@ -115,7 +115,7 @@ void MegaBot::onFrame() {
 	if(Broodwar->getFrameCount() >= metaStrategy->getLastFrameNode() + 4286) // in every 3 minutes, the megabot picks a new berravior
 	{
 		Broodwar->sendText("Changing Strategy... (in minute %i)",Broodwar->elapsedTime()/60);
-		metaStrategy->ChooseNewBerravior(currentStrategy);
+		metaStrategy->chooseNewBehavior(currentStrategy);
 		MatchData::getInstance()->registerMyBehaviorName(metaStrategy->getCurrentStrategyName().c_str());
 	}
 	if(Broodwar->getFrameCount() == 0){
