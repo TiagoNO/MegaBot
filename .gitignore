@@ -10,3 +10,10 @@
 *.idb
 *.pdb
 *.tlog
+*.log
+*.lastbuildstate
+*.user
+*.unsuccessfulbuild
+*.dll
+Debug
+/MegaBot/Release

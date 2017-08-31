@@ -3,6 +3,7 @@
 #include "../utils/Logging.h"
 #include "MetaStrategy.h"
 #include "EpsilonGreedyOnce.h"
+#include "EpsilonGreedy.h"
 #include "Probabilistic.h"
 #include "RandomSwitch.h"
 #include "SingleChoice.h"
@@ -19,6 +20,9 @@ MetaStrategy* MetaStrategyManager::getMetaStrategy(){
 		Logging::getInstance()->log("Meta strategy: %s", metaStrategyName.c_str());
 
 		if (metaStrategyName == "epsilon-greedy") {
+			activeMetaStrategy = new EpsilonGreedy();
+		}
+		else if (metaStrategyName == "epsilon-greedy-once") {
 			activeMetaStrategy = new EpsilonGreedyOnce();
 		}
 		else if (metaStrategyName == "probabilistic") {
