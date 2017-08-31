@@ -12,11 +12,19 @@ class EpsilonGreedy : public EpsilonGreedyOnce {
 	void discountCrashes();
 	//BWAPI::AIModule* randomUniform();
 
+	/* Effectively selects a new behavior, applying epsilon greedy to the current state */
+	void chooseNewBehavior(BWAPI::AIModule* currentStrategy);
+
 public:
 	EpsilonGreedy(void);
 	~EpsilonGreedy(void);
 
 	//virtual void onStart(); don't override parent onStart
+
+	/* Acts, deciding on whether to select a new behavior or not */
 	virtual void onFrame();
+
+
+	
 };
 

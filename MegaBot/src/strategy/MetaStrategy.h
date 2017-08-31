@@ -62,8 +62,6 @@ public:
 	/** Returns the active strategy */
     BWAPI::AIModule* getCurrentStrategy();
 
-	string chooseNewBehavior(BWAPI::AIModule* currentStrategy);
-
 	AIModule* MetaStrategy::randomUniformBegin();
 
 	int getLastFrameNode();
