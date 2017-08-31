@@ -71,7 +71,7 @@ public:
 	/** Returns active behavior name */
 	string getCurrentStrategyName();
 
-	void MetaStrategy::Imprime();
+	void MetaStrategy::print();
 
 	/** Acts every frame (may switch strategy or not) */
 	virtual void onFrame() {}

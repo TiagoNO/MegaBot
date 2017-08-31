@@ -72,13 +72,13 @@ void MetaStrategy::onStart() {
 	}
 }
 
-void MetaStrategy::Imprime()
+void MetaStrategy::print()
 {
 	int a = 0;
 	map<string, BWAPI::AIModule*>::iterator behv;
 
 	for(behv = portfolio.begin(); behv != portfolio.end(); behv++){
-		Broodwar->sendText("%s %i", (*behv).first.c_str(),a);
+		Broodwar->printf("%s %i", (*behv).first.c_str(),a);
 		a++;
 	}
 }
@@ -132,51 +132,47 @@ void MetaStrategy::forceStrategy(string strategyName){
 AIModule* MetaStrategy::randomUniform() {
 	Logging::getInstance()->log("Random uniform strategy selection...");
 		
-		boost::random::uniform_int_distribution<> unifInt(0, portfolio.size() - 1);
-		int index = unifInt(rng);
+	boost::random::uniform_int_distribution<> unifInt(0, portfolio.size() - 1);
+	int index = unifInt(rng);
 
-		//code partly from: http://stackoverflow.com/a/158865
-		map<string,AIModule*>::iterator iter = portfolio.begin();
-		std::advance(iter, index);
+	//code partly from: http://stackoverflow.com/a/158865
+	map<string,AIModule*>::iterator iter = portfolio.begin();
+	std::advance(iter, index);
 
-		//just testing the randomness of the generator below :P
-		//Logging::getInstance()->log("Random sequence: %d %d %d %d %d", dist(gen), dist(gen), dist(gen), dist(gen), dist(gen));
-		Logging::getInstance()->log("Random index: %d", index);
-		Logging::getInstance()->log("Selected: %s", (*iter).first.c_str());
-		if((*iter).second == portfolio["Explore"] || (*iter).second == portfolio["Expand"] || (*iter).second == portfolio["PackAndAttack"])
-		{
-			Broodwar->sendText("changing into %s",(*iter).first.c_str());
-			return (*iter).second;
-		}
-		else
-		{
-			Broodwar->sendText("stayed in the berravior, because selected %s",(*iter).first.c_str());
-			return portfolio[Configuration::getInstance()->firstBerraviorChoise];
-		}
+	//just testing the randomness of the generator below :P
+	//Logging::getInstance()->log("Random sequence: %d %d %d %d %d", dist(gen), dist(gen), dist(gen), dist(gen), dist(gen));
+	Logging::getInstance()->log("Random index: %d", index);
+	Logging::getInstance()->log("Selected: %s", (*iter).first.c_str());
+	if((*iter).second == portfolio["Explore"] || (*iter).second == portfolio["Expand"] || (*iter).second == portfolio["PackAndAttack"])
+	{
+		Broodwar->sendText("changing into %s",(*iter).first.c_str());
+		return (*iter).second;
+	}
+	else
+	{
+		Broodwar->sendText("stayed in the berravior, because selected %s",(*iter).first.c_str());
+		return portfolio[Configuration::getInstance()->firstBerraviorChoise];
+	}
 }
 
 AIModule* MetaStrategy::randomUniformBegin() {
 	Logging::getInstance()->log("Random uniform strategy selection...");
 
-		Random rand;
-		int index = (rand.nextInt())%3;
-		Broodwar->sendText("%i",index);
-		if(index == 0)
-		{
-			return portfolio["NUSBot"];
-		}
-		else if(index == 1)
-		{
-			return portfolio["Skynet"];
-		}
-		else if(index == 2)
-		{
-			return portfolio["Xelnaga"];
-		}
-		else
-		{
-			return portfolio["NUSBot"];
-		}
+	Random rand;
+	int index = (rand.nextInt())%3;
+	Broodwar->sendText("%i",index);
+	if(index == 0) {
+		return portfolio["NUSBot"];
+	}
+	else if(index == 1)	{
+		return portfolio["Skynet"];
+	}
+	else if(index == 2)	{
+		return portfolio["Xelnaga"];
+	}
+	else {
+		return portfolio["NUSBot"];
+	}
 }
 
 string MetaStrategy::chooseNewBehavior(BWAPI::AIModule* currentStrategy)
