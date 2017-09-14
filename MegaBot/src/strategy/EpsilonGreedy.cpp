@@ -27,6 +27,8 @@ void EpsilonGreedy::onFrame() {
 		);
 		chooseNewBehavior(currentStrategy);
 		MatchData::getInstance()->registerMyBehaviorName(getCurrentStrategyName().c_str());
+		MatchData::getInstance()->updateframeCrashFile();
+		Logging::getInstance()->log("updatingCrashFile");
 	}
 }
 
@@ -67,106 +69,164 @@ void EpsilonGreedy::chooseNewBehavior(BWAPI::AIModule* currentStrategy) {
 	}
 
 
-	if(Broodwar->getFrameCount() == 0)
+	if(Broodwar->getFrameCount() == 0) // if we are in the first frame, we have to choose one of the three main berraviors
 	{
 		frameNode = rootNode->FirstChildElement("frame");
 		if(frameNode == NULL)
 		{
 			frameNode = doc.NewElement("frame");
-			frameNode->SetAttribute("value",Broodwar->getFrameCount());
+			frameNode->SetAttribute("value",0);
 			rootNode->InsertFirstChild(frameNode);
-			map<string, BWAPI::AIModule*>::iterator behv;
-			for(behv = portfolio.begin(); behv != portfolio.end(); behv++)
-			{
-				myBehvNode = doc.NewElement((*behv).first.c_str());
-				myBehvNode->SetText(1);
-				frameNode->InsertFirstChild(myBehvNode);
-			}
-			currentStrategy = randomUniformBegin();
-		}
-		else
-		{
-			currentStrategy = randomUniformBegin();
-		}
-	}
-	else
-	{
-		frameNode = rootNode->FirstChildElement("frame");
-		// traverses frame nodes until finds one corresponding to the current frame
-		// (or gets null to create a new one)
-		while (frameNode != NULL) {
-			if (frameNode->Attribute("value") != NULL && frameNode->IntAttribute("value") == Broodwar->getFrameCount()) {
-				// found a node corresponding to the current frame
-				Logging::getInstance()->log(
-					"Found scores at frame %d", frameNode->IntAttribute("value")
-				);
-				break;
-			}
-			frameNode = frameNode->NextSiblingElement("frame");
-		}
-		if (frameNode == NULL) {
-			// node with current frame not found, create a new one
-			frameNode = doc.NewElement("frame");
-			frameNode->SetAttribute("value", Broodwar->getFrameCount());
-			rootNode->InsertEndChild(frameNode);
 
-			// selects a strategy at random and initializes its value as zero
-			currentStrategy = randomUniform();
+			// selects a strategy at random and initializes its value as (one/zero)
 			map<string, BWAPI::AIModule*>::iterator behv;
 			for(behv = portfolio.begin(); behv != portfolio.end(); behv++)
 			{
-				myBehvNode = doc.NewElement((*behv).first.c_str());
-				myBehvNode->SetText(1);
-				frameNode->InsertFirstChild(myBehvNode);
-			}
-		}
-		else
-		{
-			// checks for behavior scores
-			myBehvNode = frameNode->FirstChildElement();
-			if (myBehvNode == NULL) {
-				// if the frame node has no child, select a random behavior
-				// and initializes its value with zero
-				// TODO: must initialize values of all behaviors to zero,
-				// this would mitigate issue [1] bellow
-				currentStrategy = randomUniformBegin();
-				map<string, BWAPI::AIModule*>::iterator behv;
-				for(behv = portfolio.begin(); behv != portfolio.end(); behv++)
+				if((*behv).second != portfolio["Expand"] && (*behv).second != portfolio["Explore"] && (*behv).second != portfolio["PackAndAttack"])
 				{
-					myBehvNode = doc.NewElement((*behv).first.c_str());
-					myBehvNode->SetText(1);
+					myBehvNode = doc.NewElement((*behv).first.c_str()); 
+					myBehvNode->SetText(0);
 					frameNode->InsertFirstChild(myBehvNode);
 				}
 			}
-			else {
-				// frame node has children, select amongst the highest scores
-				// TODO: there is no epsilon here!
-				// [1] TODO: potential problem: what if the node has only one child?
+			currentStrategy = randomUniformBegin();
+		}
+		else
+		{
+			myBehvNode = frameNode->FirstChildElement();
+			if(myBehvNode == NULL)
+			{
+				// selects a strategy at random and initializes its value as (one/zero)
+				map<string, BWAPI::AIModule*>::iterator behv;
+				for(behv = portfolio.begin(); behv != portfolio.end(); behv++)
+				{
+					if((*behv).second != portfolio["Expand"] && (*behv).second != portfolio["Explore"] && (*behv).second != portfolio["PackAndAttack"])
+					{
+						myBehvNode = doc.NewElement((*behv).first.c_str()); 
+						myBehvNode->SetText(0);
+						frameNode->InsertFirstChild(myBehvNode);
+					}
+				}
+				currentStrategy = randomUniformBegin();
+			}
+			else
+			{
 				boost::random::mt19937 gen(static_cast<unsigned int>(std::time(0)));
 				boost::random::uniform_real_distribution<> dist(0.0, 1.0);
 				double lucky =  dist(gen); //(rand() / (double)(RAND_MAX + 1));
 				double epsilon = Configuration::getInstance()->epsilon; //alias for easy reading
 				if(lucky < epsilon) {
-					currentStrategy = randomUniform();
+					currentStrategy = randomUniformBegin();
 				}
 				else
 				{
 					float bigger = -1.0f;
 					string BotName = "Skynet";
 					float score = -FLT_MAX;
-					while (myBehvNode != NULL) {
-						if (bigger < myBehvNode->FloatAttribute("value")) {
-						bigger = myBehvNode->FloatAttribute("value");
+					while (myBehvNode != NULL) 
+					{
+						Logging::getInstance()->log("Max behavior value %i and actual behavior value %i",bigger,myBehvNode->FloatAttribute("value"));
+						if (bigger < myBehvNode->FloatAttribute("value")) 
+						{
+							bigger = myBehvNode->FloatAttribute("value");
 							BotName = myBehvNode->Name();
 						}
 						myBehvNode = myBehvNode->NextSiblingElement();
 					}
-					forceStrategy(BotName);
+					if(BotName.empty())
+					{
+						currentStrategy = randomUniformBegin();
+					}
+					else
+					{
+						forceStrategy(BotName);
+					}
 				}
 			}
 		}
-		lastFrameChecked = Broodwar->getFrameCount();
 	}
+	else // if we are in the middle of the game, we have to see what is the best choise for this moment of the game
+	{
+		frameNode = rootNode->FirstChildElement("frame");
+		while(frameNode != NULL)
+		{
+			if(frameNode->IntAttribute("value") == Broodwar->getFrameCount())
+			{
+				Logging::getInstance()->log("Found scores at frame %d", frameNode->IntAttribute("value"));
+				break;
+			}
+			frameNode = frameNode->NextSiblingElement("frame");
+		}
+		if(frameNode == NULL) // if it is the first time we reached that frame against this enemy
+		{
+			frameNode = doc.NewElement("frame");
+			frameNode->SetAttribute("value",Broodwar->getFrameCount());
+			rootNode->InsertEndChild(frameNode);
+
+			// selects a strategy at random and initializes its value as (one/zero)
+			map<string, BWAPI::AIModule*>::iterator behv;
+			for(behv = portfolio.begin(); behv != portfolio.end(); behv++)
+			{
+				myBehvNode = doc.NewElement((*behv).first.c_str()); 
+				myBehvNode->SetText(0);
+				frameNode->InsertFirstChild(myBehvNode);
+			}
+			forceStrategy("random");
+		}
+		else // if this frame is in the file, we look for the best choise
+		{
+			myBehvNode = frameNode->FirstChildElement();
+			if(myBehvNode == NULL) // if there was an error in some point while writing things in the file, we can still fix it!
+			{
+				// selects a strategy at random and initializes its value as (one/zero)
+				map<string, BWAPI::AIModule*>::iterator behv;
+				for(behv = portfolio.begin(); behv != portfolio.end(); behv++)
+				{
+					myBehvNode = doc.NewElement((*behv).first.c_str()); 
+					myBehvNode->SetText(0);
+					frameNode->InsertFirstChild(myBehvNode);
+				}
+				forceStrategy("random");
+			}
+			else // if there was no error and the berraviors were written, lets decide our next move!
+			{				
+				// frame node has children, select amongst the highest scores
+				boost::random::mt19937 gen(static_cast<unsigned int>(std::time(0)));
+				boost::random::uniform_real_distribution<> dist(0.0, 1.0);
+				double lucky =  dist(gen); //(rand() / (double)(RAND_MAX + 1));
+				double epsilon = Configuration::getInstance()->epsilon; //alias for easy reading
+				if(lucky < epsilon) {
+					forceStrategy("random");
+				}
+				else
+				{
+					float bigger = -1.0f;
+					string BotName;
+					float score;
+					while (myBehvNode != NULL) 
+					{
+						myBehvNode->QueryFloatText(&score);
+						Logging::getInstance()->log("Max behavior value %f and actual behavior value %f",bigger,score);
+						if (bigger < score) 
+						{
+							bigger = score;
+							BotName = myBehvNode->Name();
+						}
+						myBehvNode = myBehvNode->NextSiblingElement();
+					}
+					if(BotName.empty())
+					{
+						forceStrategy("random");
+					}
+					else
+					{
+						forceStrategy(BotName);
+					}
+				}
+			}
+		}
+	}
+	lastFrameChecked = Broodwar->getFrameCount();
 	doc.SaveFile(outputFile.c_str());
 	doc.SaveFile(inputFile.c_str());
 }
@@ -177,74 +237,61 @@ void EpsilonGreedy::discountCrashes() {
 	//file to read is MegaBot-vs-enemy.xml
 	string inputFile = Configuration::getInstance()->enemyInformationInputFile();
 	string outputFile = Configuration::getInstance()->enemyInformationOutputFile();
-	string crashFile = Configuration::getInstance()->crashInformationInputFile();
-
-	tinyxml2::XMLDocument doc;
-	XMLError errorInputCrash = doc.LoadFile(crashFile.c_str());
-
-	tinyxml2::XMLDocument doc2;
-	XMLError errorInput = doc2.LoadFile(inputFile.c_str());
-
-	if (errorInputCrash == XMLError::XML_NO_ERROR) {
-		XMLElement* rootNode = doc.FirstChildElement("crashes");
-		if (rootNode != NULL) {
-			XMLElement* behavior = rootNode->FirstChildElement();
-
-			map<string, float> crashesMap;
-			crashesMap[MetaStrategy::NUSBot] = 0;
-			crashesMap[MetaStrategy::SKYNET] = 0;
-			crashesMap[MetaStrategy::XELNAGA] = 0;
-
-			while (behavior != NULL) {
-				float score = -FLT_MAX;
-				behavior->QueryFloatText(&score);
-				crashesMap[behavior->Name()] = score;
-				behavior = behavior->NextSiblingElement();
+	string crashedBehaviorName = MatchData::getInstance()->getCrashedBehaviorName();
+	int frameThatCrashed = MatchData::getInstance()->getFrameThatCrashed();
+	if(!crashedBehaviorName.empty()) // if the last game crashed
+	{
+		tinyxml2::XMLDocument doc;
+		XMLError inputError = doc.LoadFile(inputFile.c_str());
+		if(inputError == XML_NO_ERROR)
+		{
+			XMLElement *rootNode;
+			XMLElement *frameNode;
+			XMLElement *myBehvNode;
+			// if file was not found, we create a node and fill information in it
+			if (inputError == XML_ERROR_FILE_NOT_FOUND) {
+				rootNode = doc.NewElement("scores");
+				doc.InsertFirstChild(rootNode);
 			}
-
-			if (errorInput == XMLError::XML_NO_ERROR) {
-				XMLElement* inputRootNode = doc2.FirstChildElement("scores");
-
-				if (inputRootNode != NULL) {
-					XMLElement* input_behavior = inputRootNode->FirstChildElement();
-
-					map<string, float> scoresMap;
-					scoresMap[MetaStrategy::NUSBot] = 0;
-					scoresMap[MetaStrategy::SKYNET] = 0;
-					scoresMap[MetaStrategy::XELNAGA] = 0;
-
-					while (input_behavior != NULL) {
-						float score = -FLT_MAX;
-						float alpha = Configuration::getInstance()->alpha;
-
-						input_behavior->QueryFloatText(&score);
-						if (score > 0 && input_behavior == behavior) {
-							for (int i = crashesMap[input_behavior->Name()]; i > 0; i--)
-								score = (1 - alpha)*score + alpha * (-1);
-
-						}
-						scoresMap[input_behavior->Name()] = score;
-						input_behavior->SetText(score);
-						input_behavior = input_behavior->NextSiblingElement();
-					}
+			// if another error occurred, we're in trouble =/
+			else if (inputError != XML_NO_ERROR) {
+				Logging::getInstance()->log("Error while parsing file '%s'. Won't switch behavior. Error: '%s'",inputFile,doc.ErrorName());
+				return;
+			}
+			else { //no error, goes after root node
+				rootNode = doc.FirstChildElement("scores");
+				if (rootNode == NULL) {
+					rootNode = doc.NewElement("scores");
+					doc.InsertFirstChild(rootNode);
 				}
-				doc2.SaveFile(outputFile.c_str());
 			}
-			else { //prints error
-				Logging::getInstance()->log(
-					"Error while parsing input file '%s'. Error: '%s'",
-					Configuration::getInstance()->enemyInformationInputFile().c_str(),
-					doc2.ErrorName()
-					);
+
+			frameNode = rootNode->FirstChildElement("frame");
+			while(frameNode != NULL)
+			{
+				if(frameNode->IntAttribute("value") == frameThatCrashed)
+				{
+					break;
+				}
+				frameNode = frameNode->NextSiblingElement("frame");
+			}
+			if(frameNode != NULL)
+			{
+				myBehvNode = frameNode->FirstChildElement(crashedBehaviorName.c_str());
+				if(myBehvNode != NULL)
+				{
+				    float alpha = Configuration::getInstance()->alpha; //alias for easy reading
+					float oldScore;
+					int result_value = -1;
+					float score;
+					myBehvNode->QueryFloatText(&score);
+					score = (1 - alpha)*oldScore + alpha*result_value;
+					myBehvNode->SetText(score);
+				}
 			}
 		}
-	}
-	else { //prints error
-		Logging::getInstance()->log(
-			"Error while parsing crash file '%s'. Error: '%s'",
-			Configuration::getInstance()->crashInformationInputFile().c_str(),
-			doc.ErrorName()
-			);
+		doc.SaveFile(outputFile.c_str());
+		doc.SaveFile(inputFile.c_str());
 	}
 }
 
