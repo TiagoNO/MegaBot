@@ -157,7 +157,7 @@ AIModule* MetaStrategy::randomUniform() {
 
 AIModule* MetaStrategy::randomUniformBegin() {
 	Logging::getInstance()->log("Random uniform strategy selection...");
-	boost::random::uniform_int_distribution<> unifInt(0, portfolio.size() - 1);
+	boost::random::uniform_int_distribution<> unifInt(0,2);
 	int index = unifInt(rng);
 	Broodwar->sendText("%i",index);
 	if(index == 0) {
