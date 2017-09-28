@@ -69,6 +69,10 @@ public:
 	/** Registers the chosen meta strategy */
 	void registerMetaStrategy(string name);
 
+	void registerCrashBehaviorName(string name);
+
+	void registerFrameThatCrashed(int frame);
+
 	/** Returns the name of the registered meta strategy */
 	string getMetaStrategyName();
 
