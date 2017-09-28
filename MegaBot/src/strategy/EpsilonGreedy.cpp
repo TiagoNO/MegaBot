@@ -21,14 +21,20 @@ EpsilonGreedy::~EpsilonGreedy(void) {
 
 
 void EpsilonGreedy::onFrame() {
-	if (Broodwar->getFrameCount() >= lastFrameChecked + 4286 || Broodwar->getFrameCount() == 0) { // every 3 minutes picks a new behavior
+	if (Broodwar->getFrameCount() >= lastFrameChecked + 4286) { // every 3 minutes picks a new behavior
 		Logging::getInstance()->log(
 			"Selecting behavior (in minute %d)", Broodwar->elapsedTime() / 60
 		);
 		chooseNewBehavior(currentStrategy);
 		MatchData::getInstance()->registerMyBehaviorName(getCurrentStrategyName().c_str());
 		MatchData::getInstance()->updateframeCrashFile();
-		Logging::getInstance()->log("updatingCrashFile");
+		Logging::getInstance()->log("Updating Crash File");
+	}
+	if(Broodwar->getFrameCount() == 0)
+	{
+		registerFirstBehavior(currentStrategy);
+		Logging::getInstance()->log("Checking if there was a crash last game...");
+		discountCrashes();
 	}
 }
 
@@ -84,7 +90,7 @@ void EpsilonGreedy::chooseNewBehavior(BWAPI::AIModule* currentStrategy) {
 			{
 				if((*behv).second != portfolio["Expand"] && (*behv).second != portfolio["Explore"] && (*behv).second != portfolio["PackAndAttack"])
 				{
-					myBehvNode = doc.NewElement((*behv).first.c_str()); 
+					myBehvNode = doc.NewElement((*behv).first.c_str());
 					myBehvNode->SetText(0);
 					frameNode->InsertFirstChild(myBehvNode);
 				}
@@ -231,6 +237,64 @@ void EpsilonGreedy::chooseNewBehavior(BWAPI::AIModule* currentStrategy) {
 	doc.SaveFile(inputFile.c_str());
 }
 
+void EpsilonGreedy::registerFirstBehavior(BWAPI::AIModule* currentStrategy)
+{
+	using namespace tinyxml2;
+
+	XMLElement* rootNode;
+	XMLElement* myBehvNode;
+	XMLElement* frameNode;
+	XMLElement* queryNode;
+
+	string inputFile = Configuration::getInstance()->enemyInformationInputFile();
+	string outputFile = Configuration::getInstance()->enemyInformationOutputFile();
+
+	tinyxml2::XMLDocument doc;
+	XMLError input_result = doc.LoadFile(inputFile.c_str());
+
+	// if file was not found, we create a node and fill information in it
+	if (input_result == XML_ERROR_FILE_NOT_FOUND) {
+		rootNode = doc.NewElement("scores");
+		doc.InsertFirstChild(rootNode);
+	}
+	// if another error occurred, we're in trouble =/
+	else if (input_result != XML_NO_ERROR) {
+		return;
+	}
+	else { //no error, goes after root node
+		rootNode = doc.FirstChildElement("scores");
+		if (rootNode == NULL) {
+			rootNode = doc.NewElement("scores");
+			doc.InsertFirstChild(rootNode);
+		}
+	}
+
+	frameNode = rootNode->FirstChildElement("frame");
+	if(frameNode == NULL)
+	{
+		frameNode = doc.NewElement("frame");
+		frameNode->SetAttribute("value",0);
+		rootNode->InsertFirstChild(frameNode);
+	}
+
+	myBehvNode = frameNode->FirstChildElement();
+	if(myBehvNode == NULL)
+	{
+		map<string, BWAPI::AIModule*>::iterator behv;
+		for(behv = portfolio.begin(); behv != portfolio.end(); behv++)
+		{
+			if((*behv).second != portfolio["Expand"] && (*behv).second != portfolio["Explore"] && (*behv).second != portfolio["PackAndAttack"])
+			{
+				myBehvNode = doc.NewElement((*behv).first.c_str());
+				myBehvNode->SetText(0);
+				frameNode->InsertFirstChild(myBehvNode);
+			}
+		}	
+	}
+	doc.SaveFile(outputFile.c_str());
+	doc.SaveFile(inputFile.c_str());
+}
+
 void EpsilonGreedy::discountCrashes() {
 	using namespace tinyxml2;
 
@@ -239,8 +303,11 @@ void EpsilonGreedy::discountCrashes() {
 	string outputFile = Configuration::getInstance()->enemyInformationOutputFile();
 	string crashedBehaviorName = MatchData::getInstance()->getCrashedBehaviorName();
 	int frameThatCrashed = MatchData::getInstance()->getFrameThatCrashed();
-	if(!crashedBehaviorName.empty()) // if the last game crashed
+	Logging::getInstance()->log("Trying to find behavior %s in frame %i",crashedBehaviorName.c_str(),frameThatCrashed);
+	
+	if(crashedBehaviorName != "empty" && frameThatCrashed != -1) // if the last game crashed
 	{
+		Logging::getInstance()->log("Discounting behavior %s because it crashed last game in the frame %i",crashedBehaviorName.c_str(),frameThatCrashed);
 		tinyxml2::XMLDocument doc;
 		XMLError inputError = doc.LoadFile(inputFile.c_str());
 		if(inputError == XML_NO_ERROR)
