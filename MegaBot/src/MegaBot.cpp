@@ -28,7 +28,6 @@ MegaBot::MegaBot() : acknowledged(false) {
 	logger = Logging::getInstance();
 
     //Configuration::getInstance()->parseConfig(); (moved to onStart)
-
     MatchData::getInstance()->registerEnemyBehaviorName("Unknown");
     enemyBehaviorName = "Unknown";
 
@@ -38,7 +37,6 @@ MegaBot::MegaBot() : acknowledged(false) {
 void MegaBot::onStart() {
     // Uncomment to enable complete map information
     //Broodwar->enableFlag(Flag::CompleteMapInformation);
-
     MatchData::getInstance()->registerMatchBegin(); // registra o inicio da partida
     Configuration::getInstance()->parseConfig();  // pega os registros de configuração do megabot no arquivo xml
 
@@ -54,10 +52,9 @@ void MegaBot::onStart() {
 	Configuration::getInstance()->firstBerraviorChoise = metaStrategy->getCurrentStrategyName().c_str();
 	Broodwar->sendText("Game started with %s !", metaStrategy->getCurrentStrategyName().c_str());
     MatchData::getInstance()->registerMyBehaviorName(metaStrategy->getCurrentStrategyName());
-    //currentBehavior->onStart();
 
-    MatchData::getInstance()->writeToCrashFile();
-
+	
+	MatchData::getInstance()->writeToCrashFile();
 	//initializes game state manager
 	GameStateManager::getInstance();
 
