@@ -15,6 +15,9 @@ class EpsilonGreedy : public EpsilonGreedyOnce {
 	/* Effectively selects a new behavior, applying epsilon greedy to the current state */
 	void chooseNewBehavior(BWAPI::AIModule* currentStrategy);
 
+	/*register the first behavior*/
+	void registerFirstBehavior(BWAPI::AIModule* currentStrategy);
+
 public:
 	EpsilonGreedy(void);
 	~EpsilonGreedy(void);
