@@ -21,7 +21,7 @@ EpsilonGreedy::~EpsilonGreedy(void) {
 
 
 void EpsilonGreedy::onFrame() {
-	if (Broodwar->getFrameCount() >= lastFrameChecked + 4286) { // every 3 minutes picks a new behavior
+	if (Broodwar->getFrameCount() >= lastFrameChecked + 4286 || Broodwar->getFrameCount() == 0) { // every 3 minutes picks a new behavior
 		Logging::getInstance()->log(
 			"Selecting behavior (in minute %d)", Broodwar->elapsedTime() / 60
 		);
@@ -32,7 +32,6 @@ void EpsilonGreedy::onFrame() {
 	}
 	if(Broodwar->getFrameCount() == 0)
 	{
-		registerFirstBehavior(currentStrategy);
 		Logging::getInstance()->log("Checking if there was a crash last game...");
 		discountCrashes();
 	}
@@ -50,7 +49,7 @@ void EpsilonGreedy::chooseNewBehavior(BWAPI::AIModule* currentStrategy) {
 	string outputFile = Configuration::getInstance()->enemyInformationOutputFile();
 
 	tinyxml2::XMLDocument doc;
-	XMLError input_result = doc.LoadFile(inputFile.c_str());
+	XMLError input_result = doc.LoadFile(outputFile.c_str());
 
 	// if file was not found, we create a node and fill information in it
 	if (input_result == XML_ERROR_FILE_NOT_FOUND) {
@@ -83,72 +82,22 @@ void EpsilonGreedy::chooseNewBehavior(BWAPI::AIModule* currentStrategy) {
 			frameNode = doc.NewElement("frame");
 			frameNode->SetAttribute("value",0);
 			rootNode->InsertFirstChild(frameNode);
-
+		}
+		myBehvNode = frameNode->FirstChildElement();
+		if(myBehvNode == NULL)
+		{
 			// selects a strategy at random and initializes its value as (one/zero)
 			map<string, BWAPI::AIModule*>::iterator behv;
 			for(behv = portfolio.begin(); behv != portfolio.end(); behv++)
 			{
 				if((*behv).second != portfolio["Expand"] && (*behv).second != portfolio["Explore"] && (*behv).second != portfolio["PackAndAttack"])
 				{
-					myBehvNode = doc.NewElement((*behv).first.c_str());
+					myBehvNode = doc.NewElement((*behv).first.c_str()); 
 					myBehvNode->SetText(0);
 					frameNode->InsertFirstChild(myBehvNode);
 				}
 			}
-			currentStrategy = randomUniformBegin();
-		}
-		else
-		{
-			myBehvNode = frameNode->FirstChildElement();
-			if(myBehvNode == NULL)
-			{
-				// selects a strategy at random and initializes its value as (one/zero)
-				map<string, BWAPI::AIModule*>::iterator behv;
-				for(behv = portfolio.begin(); behv != portfolio.end(); behv++)
-				{
-					if((*behv).second != portfolio["Expand"] && (*behv).second != portfolio["Explore"] && (*behv).second != portfolio["PackAndAttack"])
-					{
-						myBehvNode = doc.NewElement((*behv).first.c_str()); 
-						myBehvNode->SetText(0);
-						frameNode->InsertFirstChild(myBehvNode);
-					}
-				}
-				currentStrategy = randomUniformBegin();
-			}
-			else
-			{
-				boost::random::mt19937 gen(static_cast<unsigned int>(std::time(0)));
-				boost::random::uniform_real_distribution<> dist(0.0, 1.0);
-				double lucky =  dist(gen); //(rand() / (double)(RAND_MAX + 1));
-				double epsilon = Configuration::getInstance()->epsilon; //alias for easy reading
-				if(lucky < epsilon) {
-					currentStrategy = randomUniformBegin();
-				}
-				else
-				{
-					float bigger = -1.0f;
-					string BotName = "Skynet";
-					float score = -FLT_MAX;
-					while (myBehvNode != NULL) 
-					{
-						Logging::getInstance()->log("Max behavior value %i and actual behavior value %i",bigger,myBehvNode->FloatAttribute("value"));
-						if (bigger < myBehvNode->FloatAttribute("value")) 
-						{
-							bigger = myBehvNode->FloatAttribute("value");
-							BotName = myBehvNode->Name();
-						}
-						myBehvNode = myBehvNode->NextSiblingElement();
-					}
-					if(BotName.empty())
-					{
-						currentStrategy = randomUniformBegin();
-					}
-					else
-					{
-						forceStrategy(BotName);
-					}
-				}
-			}
+		//	currentStrategy = randomUniformBegin();
 		}
 	}
 	else // if we are in the middle of the game, we have to see what is the best choise for this moment of the game
@@ -168,7 +117,10 @@ void EpsilonGreedy::chooseNewBehavior(BWAPI::AIModule* currentStrategy) {
 			frameNode = doc.NewElement("frame");
 			frameNode->SetAttribute("value",Broodwar->getFrameCount());
 			rootNode->InsertEndChild(frameNode);
-
+		}
+		myBehvNode = frameNode->FirstChildElement();
+		if(myBehvNode == NULL) // if there was an error in some point while writing things in the file, we can still fix it!
+		{
 			// selects a strategy at random and initializes its value as (one/zero)
 			map<string, BWAPI::AIModule*>::iterator behv;
 			for(behv = portfolio.begin(); behv != portfolio.end(); behv++)
@@ -179,50 +131,42 @@ void EpsilonGreedy::chooseNewBehavior(BWAPI::AIModule* currentStrategy) {
 			}
 			forceStrategy("random");
 		}
-		else // if this frame is in the file, we look for the best choise
-		{
-			myBehvNode = frameNode->FirstChildElement();
-			if(myBehvNode == NULL) // if there was an error in some point while writing things in the file, we can still fix it!
-			{
-				// selects a strategy at random and initializes its value as (one/zero)
-				map<string, BWAPI::AIModule*>::iterator behv;
-				for(behv = portfolio.begin(); behv != portfolio.end(); behv++)
-				{
-					myBehvNode = doc.NewElement((*behv).first.c_str()); 
-					myBehvNode->SetText(0);
-					frameNode->InsertFirstChild(myBehvNode);
-				}
+		else // if there was no error and the berraviors were written, lets decide our next move!
+		{				
+			// frame node has children, select amongst the highest scores
+			boost::random::mt19937 gen(static_cast<unsigned int>(std::time(0)));
+			boost::random::uniform_real_distribution<> dist(0.0, 1.0);
+			double lucky =  dist(gen); //(rand() / (double)(RAND_MAX + 1));
+			double epsilon = Configuration::getInstance()->epsilon; //alias for easy reading
+			if(lucky < epsilon) {
 				forceStrategy("random");
+				Logging::getInstance()->log("random choise!");
 			}
-			else // if there was no error and the berraviors were written, lets decide our next move!
-			{				
-				// frame node has children, select amongst the highest scores
-				boost::random::mt19937 gen(static_cast<unsigned int>(std::time(0)));
-				boost::random::uniform_real_distribution<> dist(0.0, 1.0);
-				double lucky =  dist(gen); //(rand() / (double)(RAND_MAX + 1));
-				double epsilon = Configuration::getInstance()->epsilon; //alias for easy reading
-				if(lucky < epsilon) {
+			else
+			{
+				float bigger = -1.0f;
+				string BotName;
+				float score;
+				while (myBehvNode != NULL) 
+				{
+					myBehvNode->QueryFloatText(&score);
+					Logging::getInstance()->log("Max behavior value %f and actual behavior value %f",bigger,score);
+					if (bigger < score) 
+					{
+						bigger = score;
+						BotName = myBehvNode->Name();
+					}
+					myBehvNode = myBehvNode->NextSiblingElement();
+				}
+				if(BotName.empty())
+				{
 					forceStrategy("random");
 				}
 				else
 				{
-					float bigger = -1.0f;
-					string BotName;
-					float score;
-					while (myBehvNode != NULL) 
+					if(BotName != "Expand" && BotName != "Explore" && BotName != "PackAndAttack" && BotName != strategyNames[currentStrategy])
 					{
-						myBehvNode->QueryFloatText(&score);
-						Logging::getInstance()->log("Max behavior value %f and actual behavior value %f",bigger,score);
-						if (bigger < score) 
-						{
-							bigger = score;
-							BotName = myBehvNode->Name();
-						}
-						myBehvNode = myBehvNode->NextSiblingElement();
-					}
-					if(BotName.empty())
-					{
-						forceStrategy("random");
+						forceStrategy(strategyNames[currentStrategy]);
 					}
 					else
 					{
@@ -233,64 +177,6 @@ void EpsilonGreedy::chooseNewBehavior(BWAPI::AIModule* currentStrategy) {
 		}
 	}
 	lastFrameChecked = Broodwar->getFrameCount();
-	doc.SaveFile(outputFile.c_str());
-	doc.SaveFile(inputFile.c_str());
-}
-
-void EpsilonGreedy::registerFirstBehavior(BWAPI::AIModule* currentStrategy)
-{
-	using namespace tinyxml2;
-
-	XMLElement* rootNode;
-	XMLElement* myBehvNode;
-	XMLElement* frameNode;
-	XMLElement* queryNode;
-
-	string inputFile = Configuration::getInstance()->enemyInformationInputFile();
-	string outputFile = Configuration::getInstance()->enemyInformationOutputFile();
-
-	tinyxml2::XMLDocument doc;
-	XMLError input_result = doc.LoadFile(inputFile.c_str());
-
-	// if file was not found, we create a node and fill information in it
-	if (input_result == XML_ERROR_FILE_NOT_FOUND) {
-		rootNode = doc.NewElement("scores");
-		doc.InsertFirstChild(rootNode);
-	}
-	// if another error occurred, we're in trouble =/
-	else if (input_result != XML_NO_ERROR) {
-		return;
-	}
-	else { //no error, goes after root node
-		rootNode = doc.FirstChildElement("scores");
-		if (rootNode == NULL) {
-			rootNode = doc.NewElement("scores");
-			doc.InsertFirstChild(rootNode);
-		}
-	}
-
-	frameNode = rootNode->FirstChildElement("frame");
-	if(frameNode == NULL)
-	{
-		frameNode = doc.NewElement("frame");
-		frameNode->SetAttribute("value",0);
-		rootNode->InsertFirstChild(frameNode);
-	}
-
-	myBehvNode = frameNode->FirstChildElement();
-	if(myBehvNode == NULL)
-	{
-		map<string, BWAPI::AIModule*>::iterator behv;
-		for(behv = portfolio.begin(); behv != portfolio.end(); behv++)
-		{
-			if((*behv).second != portfolio["Expand"] && (*behv).second != portfolio["Explore"] && (*behv).second != portfolio["PackAndAttack"])
-			{
-				myBehvNode = doc.NewElement((*behv).first.c_str());
-				myBehvNode->SetText(0);
-				frameNode->InsertFirstChild(myBehvNode);
-			}
-		}	
-	}
 	doc.SaveFile(outputFile.c_str());
 	doc.SaveFile(inputFile.c_str());
 }
@@ -309,7 +195,7 @@ void EpsilonGreedy::discountCrashes() {
 	{
 		Logging::getInstance()->log("Discounting behavior %s because it crashed last game in the frame %i",crashedBehaviorName.c_str(),frameThatCrashed);
 		tinyxml2::XMLDocument doc;
-		XMLError inputError = doc.LoadFile(inputFile.c_str());
+		XMLError inputError = doc.LoadFile(outputFile.c_str());
 		if(inputError == XML_NO_ERROR)
 		{
 			XMLElement *rootNode;
