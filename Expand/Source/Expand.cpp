@@ -453,6 +453,20 @@ void BalanceBases(Cell *Bases,Unit *unit)
 	}
 }
 
+Position findPylon(Position a)
+{
+	for(std::set<Unit *>::const_iterator i=Broodwar->self()->getUnits().begin();i!=Broodwar->self()->getUnits().end();i++)
+	{
+		if((*i)->getType() == BWAPI::UnitTypes::Protoss_Pylon)
+		{
+			if(dist((*i)->getPosition().x(),(*i)->getPosition().y(),a.x(),a.y()) < 200)
+			{
+				return (*i)->getPosition();
+			}
+		}
+	}
+	return Position(0,0);
+}
 
 bool hasAnalysed;
 bool analysisJustFinished;
@@ -471,6 +485,8 @@ bool Expanding; // The unit that will construct the new base is walking to the m
 bool InExpansion; // The base is being constructed, to avoid construct new bases in that region
 Cell *aux; // auxiliar pointer to get the initial information of the bases and its minerals
 int Protector;
+bool BuiltGat; // bool so that we know that our gateway is ready!
+bool BuiltResearch; // bool so that we know that we can build Dragoons now!!
 
 void Expand::onStart()
 {
@@ -523,6 +539,10 @@ void Expand::onStart()
 	}
     for(std::set<Unit*>::const_iterator i=Broodwar->self()->getUnits().begin();i!=Broodwar->self()->getUnits().end();i++)
     {
+		if((*i)->getType() == UnitTypes::Protoss_Cybernetics_Core)
+		{
+			BuiltResearch = true;
+		}
 		if((*i)->getType() == UnitTypes::Terran_Supply_Depot)
 		{
 			UnitsBuildLimit = UnitsBuildLimit + 8;
@@ -765,6 +785,39 @@ void Expand::onFrame()
 					}
 				}
 			}
+			if(Broodwar->self()->minerals() >= BWAPI::UnitTypes::Protoss_Gateway)
+			{
+				Position Pylon = findPylon((*i)->getPosition());
+				if(Pylon != Position(0,0))
+				{
+					if(!BuiltGat)
+					{
+						TilePosition toBuild = TilePosition((Pylon.x()+rand()%10)/32,(Pylon.y()+rand()%10)/32);
+						if(Broodwar->canBuildHere((*i),toBuild,UnitTypes::Protoss_Gateway,false))
+						{
+							(*i)->build(toBuild,UnitTypes::Protoss_Gateway);
+							BuiltGat = true;
+						}
+						else
+						{
+							BuiltGat = false;
+						}
+					}
+					if(!BuiltResearch)
+					{
+						TilePosition toBuild = TilePosition((Pylon.x()+rand()%10)/32,(Pylon.y()+rand()%10)/32);
+						if(Broodwar->canBuildHere((*i),toBuild,UnitTypes::Protoss_Gateway,false))
+						{
+							(*i)->build(toBuild,UnitTypes::Protoss_Gateway);
+							BuiltResearch = true;
+						}
+						else
+						{
+							BuiltResearch = false;
+						}
+					}
+				}
+			}
 		}
 		if((*i)->getType().isResourceDepot() && !(*i)->isBeingConstructed() && !(*i)->isMorphing() && (*i)->isCompleted()) // build new workers
 		{
@@ -807,6 +860,20 @@ void Expand::onFrame()
 					{
 						UnitsBuildLimit = UnitsBuildLimit + 8;
 					}
+				}
+			}
+		}
+		if((*i)->getType() == BWAPI::UnitTypes::Protoss_Gateway && (*i)->isIdle())
+		{
+			if(Broodwar->self()->minerals() >= BWAPI::UnitTypes::Protoss_Zealot.mineralPrice())
+			{
+				(*i)->train(BWAPI::UnitTypes::Protoss_Zealot);
+			}
+			if(Broodwar->self()->minerals() >= BWAPI::UnitTypes::Protoss_Dragoon.mineralPrice() && Broodwar->self()->gas() >= BWAPI::UnitTypes::Protoss_Dragoon.gasPrice())
+			{
+				if(BuiltResearch)
+				{
+					(*i)->train(BWAPI::UnitTypes::Protoss_Dragoon);
 				}
 			}
 		}
