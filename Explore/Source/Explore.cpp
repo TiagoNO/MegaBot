@@ -23,7 +23,7 @@ bool analyzed;
 bool analysis_just_finished;
 BWTA::Region* home;
 BWTA::Region* enemy_base;
-
+int reset;
 std::set<Position> PositionsVisited;
 std::set<Position>::const_iterator iter;
 bool NotVisited;
@@ -44,6 +44,7 @@ void Explore::onStart()
   show_visibility_data=false;
 
   NotVisited = true;
+  reset = 0;
 
 }
 
@@ -99,7 +100,7 @@ void Explore::onFrame()
   {
     analysis_just_finished=false;
   }
-
+  reset = 0;
 	for (std::set<Unit*>::const_iterator i = Broodwar->self()->getUnits().begin(); i != Broodwar->self()->getUnits().end(); i++) 
 	{
 		if (!(*i)->getType().isWorker() && (*i)->isIdle() && (*i)->canIssueCommand(UnitCommand::move((*i),Position(0,0),false)) && (*i)->isCompleted()) 
@@ -117,6 +118,10 @@ void Explore::onFrame()
 							PositionsVisited.insert(movimento);
 						}
 					}
+					else
+					{
+						reset++;
+					}
 				}
 			}
 			else
@@ -128,6 +133,10 @@ void Explore::onFrame()
 						Broodwar->sendText("Adicionado");
 						PositionsVisited.insert(movimento);
 					}
+				}
+				else
+				{
+					reset++;
 				}
 			}
 		}
@@ -149,6 +158,10 @@ void Explore::onFrame()
 	for(iter = PositionsVisited.begin();iter != PositionsVisited.end();iter++)
 	{
 		Broodwar->drawCircle(CoordinateType::Map,(*iter).x(),(*iter).y(),225,Colors::Red,false);
+	}
+	if(reset >= 15)
+	{
+		PositionsVisited.clear();
 	}
 }
 
