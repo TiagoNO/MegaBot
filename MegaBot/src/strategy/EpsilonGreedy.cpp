@@ -140,7 +140,7 @@ void EpsilonGreedy::chooseNewBehavior(BWAPI::AIModule* currentStrategy) {
 			double epsilon = Configuration::getInstance()->epsilon; //alias for easy reading
 			if(lucky < epsilon) {
 				forceStrategy("random");
-				Logging::getInstance()->log("random choise!");
+				Logging::getInstance()->log("random choise (%f < %f)!",lucky,epsilon);
 			}
 			else
 			{
@@ -150,8 +150,8 @@ void EpsilonGreedy::chooseNewBehavior(BWAPI::AIModule* currentStrategy) {
 				while (myBehvNode != NULL) 
 				{
 					myBehvNode->QueryFloatText(&score);
-					Logging::getInstance()->log("Max behavior value %f and actual behavior value %f",bigger,score);
-					if (bigger < score) 
+					Logging::getInstance()->log("Max behavior value %f(%s) and actual behavior value %f(%s)",bigger,BotName.c_str(),score,myBehvNode->Name());
+					if (bigger <= score) 
 					{
 						bigger = score;
 						BotName = myBehvNode->Name();
