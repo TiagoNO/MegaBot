@@ -124,7 +124,6 @@ void MegaBot::onFrame() {
     }
 
 	if(Broodwar->getFrameCount() == 0){ logger->log("first metaStrategy->onFrame()"); }
-	
 	metaStrategy->onFrame();	//might switch strategy so I update currentStrategy below
 
 	if(Broodwar->getFrameCount() == 0){ logger->log("first strategy->onFrame()"); }
