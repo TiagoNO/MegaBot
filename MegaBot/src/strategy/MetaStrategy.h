@@ -33,6 +33,8 @@ protected:
 
 	int lastFrameChecked;
 
+	bool changedBehavior;
+
 	/** Maps behaviors to their respective names */
     std::map<BWAPI::AIModule*, string> strategyNames;
 
@@ -68,6 +70,8 @@ public:
 
 	/** Returns active behavior name */
 	string getCurrentStrategyName();
+
+	bool BehaviorChanged();
 
 	void MetaStrategy::print();
 
