@@ -1,5 +1,6 @@
 #include "Expand.h"
 #include <math.h>
+#include "../../MegaBot/src/utils/Logging.h"
 using namespace BWAPI;
 
 typedef struct InformationMinerals
@@ -210,11 +211,13 @@ int CountNumWorkers(int x, int y)
 
 	for(std::set<Unit*>::const_iterator u=Broodwar->self()->getUnits().begin();u!=Broodwar->self()->getUnits().end();u++)
 	{
-		if((*u)->getType().isWorker() && dist((*u)->getTilePosition().x(),(*u)->getTilePosition().y(),x,y) < 100)
+		if((*u)->getType().isWorker() && dist((*u)->getTilePosition().x(),(*u)->getTilePosition().y(),x,y) < 20)
 		{
+			Broodwar->sendText("(%i,%i)x(%i,%i)->{%i}",(*u)->getTilePosition().x(),(*u)->getTilePosition().y(),x,y,dist((*u)->getTilePosition().x(),(*u)->getTilePosition().y(),x,y));
 			count++;
 		}
 	}
+	Broodwar->sendText("%i workers",count);
 	return count;
 }
 
@@ -223,12 +226,13 @@ int CountNumMineralField(int x,int y)
 	int count = 0;
     for(std::set<Unit*>::iterator u=Broodwar->getMinerals().begin();u!=Broodwar->getMinerals().end();u++)
     {
-		if((*u)->getType().isMineralField() && dist((*u)->getTilePosition().x(),(*u)->getTilePosition().y(),x,y) < 100)
+		if((*u)->getType().isMineralField() && dist((*u)->getTilePosition().x(),(*u)->getTilePosition().y(),x,y) < 20)
 		{
-			if((*u)->isVisible())
-				count++;
+			Broodwar->sendText("(%i,%i)x(%i,%i)->{%i}",(*u)->getTilePosition().x(),(*u)->getTilePosition().y(),x,y,dist((*u)->getTilePosition().x(),(*u)->getTilePosition().y(),x,y));
+			count++;
 		}
     }
+	Broodwar->sendText("%i minerals",count);
 	return count;
 }
 
@@ -453,7 +457,7 @@ void BalanceBases(Cell *Bases,Unit *unit)
 	}
 }
 
-Position findPylon(Position a)
+TilePosition findPylon(Position a)
 {
 	for(std::set<Unit *>::const_iterator i=Broodwar->self()->getUnits().begin();i!=Broodwar->self()->getUnits().end();i++)
 	{
@@ -461,11 +465,86 @@ Position findPylon(Position a)
 		{
 			if(dist((*i)->getPosition().x(),(*i)->getPosition().y(),a.x(),a.y()) < 200)
 			{
-				return (*i)->getPosition();
+				return (*i)->getTilePosition();
 			}
 		}
 	}
-	return Position(0,0);
+	return TilePosition(0,0);
+}
+
+void InitializeInMiddleGame(Cell *Bases,Unit *unit,int NumBases)
+{
+	if(Bases->Info.Id == -1)
+	{
+		Bases->Info.BaseAlreadyBuilt = true;
+		Bases->Info.Id = unit->getID();
+		Bases->Info.NumBase = NumBases;
+		Bases->Info.NumMineralField = CountNumMineralField(unit->getTilePosition().x(),unit->getTilePosition().y());
+		Bases->Info.NumWorkers = CountNumWorkers(unit->getTilePosition().x(),unit->getTilePosition().y());
+		Bases->Info.PosiX = unit->getTilePosition().x();
+		Bases->Info.PosiY = unit->getTilePosition().y();
+		Bases->Info.WorkerPerMineral = (float) Bases->Info.NumWorkers/Bases->Info.NumMineralField;
+		Bases->Minerals = InitializeMineralsList();
+		Bases->prox = NULL;
+	}
+	else
+	{
+		Cell *aux;
+		aux = Bases;
+		while(aux->prox != NULL)
+		{
+			if(aux->Info.Id == unit->getID())
+			{
+				Broodwar->sendText("Já está adicionado a lista");
+				break;
+			}
+			aux = aux->prox;
+		}
+		if(aux->Info.Id == unit->getID())
+		{
+			Broodwar->sendText("Já está adicionado a lista");
+		}
+		else
+		{
+			Cell *aux2;
+			Broodwar->sendText("Não está na lista, mas está sendo adicionado agora");
+			aux2 = (Cell *)malloc(sizeof(Cell));
+			aux2->Info.BaseAlreadyBuilt = true;
+			aux2->Info.Id = unit->getID();
+			aux2->Info.NumBase = NumBases;
+			aux2->Info.NumMineralField = CountNumMineralField(unit->getTilePosition().x(),unit->getTilePosition().y());
+			aux2->Info.NumWorkers = CountNumWorkers(unit->getTilePosition().x(),unit->getTilePosition().y());
+			aux2->Info.PosiX = unit->getTilePosition().x();
+			aux2->Info.PosiY = unit->getTilePosition().y();
+			aux2->Info.WorkerPerMineral = (float) aux2->Info.NumWorkers/aux2->Info.NumMineralField;
+			aux2->Minerals = InitializeMineralsList();
+			aux2->prox = NULL;
+			aux->prox = aux2;
+		}
+		aux = NULL;
+		free(aux);
+	}
+}
+
+void PrintBases(Cell *Bases)
+{
+	Cell *aux = Bases;
+	while(aux != NULL)
+	{
+		Logging::getInstance()->log("%i %i %i %i %i %f",aux->Info.Id,aux->Info.PosiX,aux->Info.PosiY,aux->Info.NumMineralField,aux->Info.NumWorkers,aux->Info.WorkerPerMineral);
+		aux = aux->prox;
+	}
+}
+
+void buildAssimilator(TilePosition gas)
+{
+	for(std::set<Unit *>::const_iterator i = Broodwar->self()->getUnits().begin(); i!=Broodwar->self()->getUnits().end(); i++)
+	{
+		if((*i)->getType().isWorker() && dist((*i)->getTilePosition().x(),(*i)->getTilePosition().y(),gas.x(),gas.y()) < 200)
+		{
+			(*i)->build(gas,UnitTypes::Protoss_Assimilator);
+		}
+	}
 }
 
 bool hasAnalysed;
@@ -484,27 +563,17 @@ bool Built; // Found a valid position to build a new base next to an mineral fie
 bool Expanding; // The unit that will construct the new base is walking to the mineral field where it is going to be 
 bool InExpansion; // The base is being constructed, to avoid construct new bases in that region
 Cell *aux; // auxiliar pointer to get the initial information of the bases and its minerals
-int Protector;
+int Protector; // avoid some errors
+int resetExpansion; // if there was an error in the expansion, we just reset it!
 bool BuiltGat; // bool so that we know that our gateway is ready!
 bool BuiltResearch; // bool so that we know that we can build Dragoons now!!
+bool InGame; // bool so that we know that this behavior was called in the middle of the game
+BWAPI::Position MoveTo; // position where the last minerals were found
+int timeNewGat; // time since the last gat were built!
 
 void Expand::onStart()
 {
-  Broodwar->enableFlag(BWAPI::Flag::UserInput);
-  Bases = InitializeBase();
-  aux = Bases;
-  NumBases = 1;
-  Built = false;
-  Workers = 0;
-  IdConstructor = -1;
-  Cell *aux;
-  aux = Bases;
-  Expanding = false;
-  Cell *aux2;
-  Protector = 0;
-
-
-
+  InGame = false;
   BWTA::readMap();
   hasAnalysed=false;
   analysisJustFinished=false;
@@ -514,7 +583,6 @@ void Expand::onStart()
 
   if (Broodwar->isReplay())
   {
-    Broodwar->printf("The following players are in this replay:");
     for(std::set<Player*>::iterator p=Broodwar->getPlayers().begin();p!=Broodwar->getPlayers().end();p++)
     {
       if (!(*p)->getUnits().empty() && !(*p)->isNeutral())
@@ -562,30 +630,16 @@ void Expand::onStart()
 			{
 				IdExplorer = (*i)->getID();
 			}
-			if(IdConstructor == -1 && (*i)->getID() != IdExplorer) // gets the unit that will expand when there is enought minerals
+			if(IdConstructor == -1 && (*i)->getID() != IdExplorer) // gets the unit that will Expand when there is enought minerals
 			{
 				IdConstructor = (*i)->getID();
 			}
 		}
 		if ((*i)->getType().isResourceDepot())
 		{
-			aux->prox = InitializeBase();		
-			aux->Info.PosiX = (*i)->getTilePosition().x();  // gets all the bases that the bot already have;
-			aux->Info.PosiY = (*i)->getTilePosition().y();
-			aux->Info.Id = (*i)->getID();
-			aux->Info.NumWorkers = CountNumWorkers(aux->Info.PosiX,aux->Info.PosiY);
-			aux->Info.NumMineralField = CountNumMineralField((aux->Info.PosiX),(aux->Info.PosiY));
-			aux->Info.NumBase = 1;
-			aux->Info.BaseAlreadyBuilt = true;
-			aux->Info.WorkerPerMineral = float(float(aux->Info.NumWorkers)/float(aux->Info.NumMineralField));
-			//Broodwar->sendText("%f",aux->Info.WorkerPerMineral);
-			aux2 = aux;			
-			aux = aux->prox;
 		}
 	}
   }
-  aux2->prox = NULL;
-  free(aux);
 }
 
 void Expand::onEnd(bool isWinner)
@@ -598,7 +652,6 @@ void Expand::onEnd(bool isWinner)
 
 void Expand::onFrame()
 {
-	//Broodwar->sendText("%i %i {%i %i}",Built,Expanding,Workers,UnitsBuildLimit);
 	if (show_visibility_data)
 	{
 		drawVisibilityData();
@@ -607,7 +660,82 @@ void Expand::onFrame()
 	{
 		drawBullets();
 	}
-
+	if(Broodwar->getFrameCount()%4286 == 0)
+	{
+		Logging::getInstance()->log("Starting again");
+	}
+	if(!InGame)
+	{
+		if(Bases == NULL)
+		{
+			  Bases = InitializeBase();
+			  NumBases = 1;
+			  Built = false;
+			  Workers = 0;
+			  IdConstructor = -1;
+			  Expanding = false;
+			  Protector = 0;
+			  InGame = false;
+			  MoveTo = Position(0,0);
+			  BuiltResearch = false;
+			  BuiltGat = false;
+			  resetExpansion = 0;
+			  Logging::getInstance()->log("Initializing Bases");
+		}
+		if(Broodwar->self()->getRace() == Races::Zerg)
+		{
+			UnitsBuildLimit = 1;
+		}
+		else if(Broodwar->self()->getRace() == Races::Protoss)
+		{
+			UnitsBuildLimit = 9;
+		}
+		else if(Broodwar->self()->getRace() == Races::Terran)
+		{
+			UnitsBuildLimit = 10;
+		}
+		for(std::set<Unit*>::const_iterator i=Broodwar->self()->getUnits().begin();i!=Broodwar->self()->getUnits().end();i++)
+		{
+			Logging::getInstance()->log("Analising units");
+			if((*i)->getType() == UnitTypes::Protoss_Cybernetics_Core)
+			{
+				BuiltResearch = true;
+			}
+			if((*i)->getType() == UnitTypes::Terran_Supply_Depot)
+			{
+				UnitsBuildLimit = UnitsBuildLimit + 8;
+			}
+			else if((*i)->getType() == UnitTypes::Zerg_Overlord)
+			{
+				UnitsBuildLimit = UnitsBuildLimit + 8;
+			}
+			else if((*i)->getType() == UnitTypes::Protoss_Pylon)
+			{
+				UnitsBuildLimit = UnitsBuildLimit + 8;
+			}
+			if ((*i)->getType().isWorker())
+			{
+				Workers++;
+				if(IdExplorer == -1) // gets the unit that will explore the map
+				{
+					IdExplorer = (*i)->getID();
+				}
+				if(IdConstructor == -1 && (*i)->getID() != IdExplorer) // gets the unit that will Expand when there is enought minerals
+				{
+					IdConstructor = (*i)->getID();
+				}
+			}
+			if ((*i)->getType().isResourceDepot())
+			{
+				Logging::getInstance()->log("Found a new base!");
+				InitializeInMiddleGame(Bases,(*i),NumBases);
+				NumBases++;
+			}
+		}
+		InGame = true;
+	}
+	PrintBases(Bases);
+	Broodwar->sendText("%i %i",BuiltGat,BuiltResearch);
 	drawStats();
 	if(hasAnalysed && Broodwar->getFrameCount()%30==0)
 	{
@@ -644,7 +772,7 @@ void Expand::onFrame()
 
 	if(Broodwar->self()->minerals() >= Broodwar->self()->getRace().getCenter().mineralPrice() && !Built)
 	{
-		NewBase = SearchBase(Bases); // Search for a Base to expand
+		NewBase = SearchBase(Bases); // Search for a Base to Expand
 		if(NewBase != TilePosition(0,0)) // if found a base
 		{
 			Built = true; // let it know that it was found
@@ -665,8 +793,16 @@ void Expand::onFrame()
 			}
 			if(IdExplorer == (*i)->getID() && (*i)->isIdle())
 			{
-				Position movimento = Position(rand()%(Broodwar->mapWidth()*32),rand()%(Broodwar->mapHeight()*32));
-				(*i)->move(movimento);  // move the explorer to a new position
+				if(MoveTo != Position(0,0))
+				{
+					(*i)->move(MoveTo);
+					MoveTo = Position(0,0);
+				}
+				else
+				{
+					Position movimento = Position(rand()%(Broodwar->mapWidth()*32),rand()%(Broodwar->mapHeight()*32));
+					(*i)->move(movimento);  // move the explorer to a new position
+				}
 			}
 			if((*i)->isIdle())
 			{
@@ -675,6 +811,11 @@ void Expand::onFrame()
 				{
 					if (closestMineral == NULL || (*i)->getDistance(*m)<(*i)->getDistance(closestMineral)) 
 						closestMineral=*m;
+					if((*m)->getType() == BWAPI::UnitTypes::Resource_Vespene_Geyser && Broodwar->self()->minerals() >= UnitTypes::Resource_Vespene_Geyser.mineralPrice())
+					{
+						buildAssimilator((*m)->getTilePosition());
+						Broodwar->sendText("oi");
+					}
 				}
 				if(closestMineral != NULL && (*i)->getID() != IdExplorer && (*i)->getID() != IdConstructor)
 				{
@@ -776,6 +917,7 @@ void Expand::onFrame()
 						InExpansion = false;
 						IdConstructor = -1;
 						UpdateBases(Bases,NewBase,-1,true,true);
+						NumBases++;
 					}
 					else
 					{
@@ -785,48 +927,18 @@ void Expand::onFrame()
 					}
 				}
 			}
-			if(Broodwar->self()->minerals() >= BWAPI::UnitTypes::Protoss_Gateway)
-			{
-				Position Pylon = findPylon((*i)->getPosition());
-				if(Pylon != Position(0,0))
-				{
-					if(!BuiltGat)
-					{
-						TilePosition toBuild = TilePosition((Pylon.x()+rand()%10)/32,(Pylon.y()+rand()%10)/32);
-						if(Broodwar->canBuildHere((*i),toBuild,UnitTypes::Protoss_Gateway,false))
-						{
-							(*i)->build(toBuild,UnitTypes::Protoss_Gateway);
-							BuiltGat = true;
-						}
-						else
-						{
-							BuiltGat = false;
-						}
-					}
-					if(!BuiltResearch)
-					{
-						TilePosition toBuild = TilePosition((Pylon.x()+rand()%10)/32,(Pylon.y()+rand()%10)/32);
-						if(Broodwar->canBuildHere((*i),toBuild,UnitTypes::Protoss_Gateway,false))
-						{
-							(*i)->build(toBuild,UnitTypes::Protoss_Gateway);
-							BuiltResearch = true;
-						}
-						else
-						{
-							BuiltResearch = false;
-						}
-					}
-				}
-			}
 		}
 		if((*i)->getType().isResourceDepot() && !(*i)->isBeingConstructed() && !(*i)->isMorphing() && (*i)->isCompleted()) // build new workers
 		{
+			Broodwar->drawCircle(CoordinateType::Map,(*i)->getPosition().x(),(*i)->getPosition().y(),10,Colors::Red,false);
+			Broodwar->sendText("%i %i",Workers,UnitsBuildLimit);
 			if(Workers < 60)
 			{
 				Cell *aux;
 				aux = RateOfWorkers(Bases,(*i));
 				if(aux != NULL) 
 				{
+					Broodwar->drawCircle(CoordinateType::Map,aux->Info.PosiX*32,aux->Info.PosiY*32,10,Colors::Red,false);
 					if(aux->Info.WorkerPerMineral < 2 && (*i)->isIdle())
 					{
 						if(Broodwar->self()->minerals() >= Broodwar->self()->getRace().getWorker().mineralPrice())
@@ -835,7 +947,7 @@ void Expand::onFrame()
 							{
 								aux->Info.NumWorkers++;
 								aux->Info.WorkerPerMineral = float(float(aux->Info.NumWorkers)/float(aux->Info.NumMineralField));
-								//Broodwar->sendText("%f",aux->Info.WorkerPerMineral);
+								Broodwar->sendText("%f",aux->Info.WorkerPerMineral);
 								Workers++;
 								aux = NULL;
 								free(aux);
@@ -862,6 +974,62 @@ void Expand::onFrame()
 					}
 				}
 			}
+		}
+		if(Expanding && (*i)->getType().isResourceDepot() && (*i)->isCompleted())
+		{
+			Broodwar->sendText("N = %i %i",NumBases,resetExpansion);
+			resetExpansion++;
+		}
+		else
+		{
+			resetExpansion = 0;
+		}
+		if(resetExpansion == NumBases)
+		{
+			Built = false;
+			Expanding = false;
+			UpdateBases(Bases,NewBase,-1,false,true);
+		}
+		if(Broodwar->self()->minerals() >= BWAPI::UnitTypes::Protoss_Gateway && (*i)->getType().isWorker())
+		{
+			TilePosition Pylon = findPylon((*i)->getPosition());
+			Broodwar->drawCircle(CoordinateType::Map,Pylon.x()*32,Pylon.y()*32,10,Colors::Red,false);
+			if(Pylon != TilePosition(0,0))
+			{
+				Broodwar->sendText("Possui pylon e dinheiro!!");
+				if(!BuiltGat)
+					{
+					Pylon = TilePosition(Pylon.x()+rand()%30,Pylon.y()+rand()%30);
+					Broodwar->drawCircle(CoordinateType::Map,Pylon.x()*32,Pylon.y()*32,10,Colors::Red,false);
+					if((*i)->build(Pylon,UnitTypes::Protoss_Gateway))
+					{
+						BuiltGat = true;
+						timeNewGat = Broodwar->getFrameCount()/24;
+					}
+					else
+					{
+						BuiltGat = false;
+					}
+				}
+					if(!BuiltResearch)
+				{
+					Pylon = TilePosition(Pylon.x()+rand()%30,Pylon.y()+rand()%30);
+					Broodwar->drawCircle(CoordinateType::Map,Pylon.x(),Pylon.y(),10,Colors::Red,true);
+					if((*i)->build(Pylon,UnitTypes::Protoss_Cybernetics_Core))
+					{
+						BuiltResearch = true;
+					}
+					else
+					{
+						BuiltResearch = false;
+					}
+				}
+			}
+		}
+		if(Broodwar->getFrameCount()/24 - timeNewGat >= 150)
+		{
+			BuiltGat = false;
+			Broodwar->sendText("Time to build another gate!");
 		}
 		if((*i)->getType() == BWAPI::UnitTypes::Protoss_Gateway && (*i)->isIdle())
 		{
@@ -944,6 +1112,7 @@ void Expand::onUnitDiscover(BWAPI::Unit* unit)
 			DontAdd = true;
 		if(!DontAdd)
 		{
+			MoveTo = unit->getPosition();
 			Broodwar->drawCircle(BWAPI::CoordinateType::Screen,unit->getPosition().x(),unit->getPosition().y(),100,Colors::Green,false);
 			int ValueOfReturn;
 			ValueOfReturn = InAnyBase(Bases,unit);
