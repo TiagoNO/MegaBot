@@ -62,6 +62,10 @@ std::string MetaStrategy::getCurrentStrategyName(){
 	return strategyNames[currentStrategy];
 }
 
+bool MetaStrategy::BehaviorChanged(){
+	return changedBehavior;
+}
+
 void MetaStrategy::onStart() {
 	lastFrameChecked = 0;
 	map<string, BWAPI::AIModule*>::iterator behv;
@@ -102,6 +106,15 @@ void MetaStrategy::forceStrategy(string strategyName){
 		currentStrategy = randomUniform();
 	}
 	else if ( portfolio.find(strategyName) != portfolio.end() ){ //found strategyName in map
+		if(oldStrategyName != strategyName)
+		{
+			changedBehavior = true;
+		}
+		else
+		{
+			Logging::getInstance()->log("did not change %s to %s",oldStrategyName.c_str(),strategyName.c_str());
+			changedBehavior = false;
+		}
 		currentStrategy = portfolio[strategyName];
 	}
 	else { //strategyName not found in map
@@ -122,7 +135,6 @@ void MetaStrategy::forceStrategy(string strategyName){
 		currentStrategy = portfolio[oldStrategyName];
 		return;
 	}
-
 	Logging::getInstance()->log(
 		"Switching %s -> %s", oldStrategyName.c_str(), getCurrentStrategyName().c_str()
 	);
@@ -146,11 +158,13 @@ AIModule* MetaStrategy::randomUniform() {
 	if((*iter).second == portfolio["Explore"] || (*iter).second == portfolio["Expand"] || (*iter).second == portfolio["PackAndAttack"])
 	{
 		Broodwar->sendText("changing into %s",(*iter).first.c_str());
+		changedBehavior = true;
 		return (*iter).second;
 	}
 	else
 	{
 		Broodwar->sendText("stayed in the berravior, because selected %s",(*iter).first.c_str());
+		changedBehavior = false;
 		return portfolio[Configuration::getInstance()->firstBerraviorChoise];
 	}
 }
