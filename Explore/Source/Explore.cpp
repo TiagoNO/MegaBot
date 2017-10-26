@@ -2,6 +2,125 @@
 #include <math.h>
 using namespace BWAPI;
 
+#define pylo 0
+#define cyber 1
+#define gate 2
+
+typedef struct BuildCell{
+	TilePosition BuildTilePosition;
+	UnitType building;
+	struct BuildCell *prox;
+}BuildCell;
+
+BuildCell *InitializeBuildManager()
+{
+	BuildCell *BManager;
+	BManager = (BuildCell *)malloc(sizeof(BuildCell));
+	BManager->building = UnitTypes::None;
+	BManager->BuildTilePosition = TilePosition(0,0);
+	BManager->prox = NULL;
+	return BManager;
+}
+
+void AddBuildingList(BuildCell *BManager,TilePosition buildingTilePosition,UnitType building,bool priority)
+{
+	BuildCell *aux = BManager;
+	BuildCell *NewCell = (BuildCell *)malloc(sizeof(BuildCell));
+	NewCell->building = building;
+	NewCell->BuildTilePosition = buildingTilePosition;
+	NewCell->prox = NULL;
+	if(priority)
+	{
+		NewCell->prox = BManager->prox;
+		BManager->prox = NewCell;
+	}
+	else
+	{
+		while(aux->prox != NULL)
+		{
+			aux = aux->prox;
+		}
+		aux->prox = NewCell;
+	}
+}
+
+bool CheckUnitInBuildList(BuildCell *BManager,UnitType building)
+{
+	BuildCell *aux;
+	aux = BManager;
+	while(aux != NULL)
+	{
+		if(aux->building == building)
+		{
+			return true;
+		}
+		aux = aux->prox;
+	}
+	return false;
+}
+
+void PrintBuildList(BuildCell *BManager)
+{
+	int i = 1;
+	BuildCell *aux;
+	aux = BManager->prox;
+	while(aux != NULL)
+	{
+		Broodwar->sendText("%i- %s {%i,%i}",i,aux->building.getName().c_str(),aux->BuildTilePosition.x(),aux->BuildTilePosition.y());
+		i++;
+		aux = aux->prox;
+	}
+
+}
+
+bool BuildFirstList(BuildCell *BManager,Unit *u,UnitType *LastBuilt,int *LastBuildingPrice,bool *Buildings)
+{
+	if(BManager->prox != NULL && BManager->prox->building != UnitTypes::None)
+	{
+		Broodwar->sendText("is not empty");
+	 	if(Broodwar->self()->minerals() - (*LastBuildingPrice) >= BManager->prox->building.mineralPrice())
+		{
+			Broodwar->sendText("there is mineral to build");
+			if(Broodwar->canBuildHere(u,BManager->prox->BuildTilePosition,BManager->prox->building,true))
+			{
+				Broodwar->sendText("we can build there");
+				if(u->build(BManager->prox->BuildTilePosition,BManager->prox->building))
+				{
+					Broodwar->sendText("the unit went to build");
+					(*LastBuildingPrice) += BManager->prox->building.mineralPrice();
+					(*LastBuilt) = BManager->prox->building;
+
+					u->build(BManager->prox->BuildTilePosition,BManager->prox->building);
+					
+					Broodwar->sendText("The Building %s is now beeing constructed!",BManager->prox->building.getName().c_str());
+					BManager->prox = BManager->prox->prox;
+					return true;
+				}
+			}
+			else
+			{
+				BuildCell *aux = BManager->prox;
+				BManager->prox = BManager->prox->prox;
+				aux->prox = NULL;
+				if(aux->building == UnitTypes::Protoss_Pylon)
+				{
+					Buildings[pylo] = false;
+				}
+				else if(aux->building == UnitTypes::Protoss_Cybernetics_Core)
+				{
+					Buildings[cyber] = false;			
+				}
+				else if(aux->building == UnitTypes::Protoss_Gateway)
+				{
+					Buildings[gate] = false;
+				}
+				free(aux);
+			}
+		}
+	}
+	return false;
+}
+
 int distan(int x1,int y1,int x2,int y2)
 {
 	return (int)sqrt((double)(((x1 - x2)*(x1-x2)) + ((y1-y2)*(y1-y2))));
@@ -11,12 +130,188 @@ bool isVisited(Position place,std::set<Position> PositionsVisited)
 {
 	for(std::set<Position>::const_iterator iter=PositionsVisited.begin();iter!=PositionsVisited.end();iter++)
 	{
-		if(distan(place.x(),place.y(),(*iter).x(),(*iter).y()) < 450)
+		if(distan(place.x(),place.y(),(*iter).x(),(*iter).y()) < 300)
 		{
 			return true;
 		}
 	}
 	return false;
+}
+
+TilePosition GetConstructionPosition(TilePosition buildP,int n)
+{
+	int x = buildP.x();
+	int y = buildP.y();
+	int sinalx = rand()%2;
+	int sinaly = rand()%2;
+	if(sinalx == 1)
+	{
+		x = buildP.x() - (rand()%n);
+	}
+	else if(sinalx == 0)
+	{
+		x = buildP.x()  + (rand()%n);
+	}
+	if(sinaly == 1)
+	{
+		y = buildP.y() - (rand()%n); // gets a randon position until it is valid
+	}
+	else if(sinaly == 0)
+	{
+		y = buildP.y() + (rand()%n);
+	}
+	else
+	{
+		return TilePosition(0,0);
+	}
+	return TilePosition(x,y);
+}
+
+TilePosition findPylon(TilePosition a)
+{
+	TilePosition b = TilePosition(99999,99999);
+	for(std::set<Unit *>::const_iterator i=Broodwar->self()->getUnits().begin();i!=Broodwar->self()->getUnits().end();i++)
+	{
+		if((*i)->getType() == BWAPI::UnitTypes::Protoss_Pylon)
+		{
+			Broodwar->drawCircle(CoordinateType::Map,b.x()*32,b.y()*32,10,Colors::Red,false);
+			return (*i)->getTilePosition();
+		}
+	}
+	return TilePosition(0,0);
+}
+
+bool CheckIfTheGroupisReunited(Unit *leader)
+{
+	int result = 1;
+	Broodwar->drawCircle(CoordinateType::Map,leader->getPosition().x(),leader->getPosition().y(),150,Colors::Grey,false);
+	for(std::set<Unit *>::const_iterator i=Broodwar->getUnitsInRadius(leader->getPosition(),150).begin();i!=Broodwar->getUnitsInRadius(leader->getPosition(),150).end();i++)
+	{
+		if(!(*i)->getType().isWorker() && !(*i)->getType().isBuilding())
+		{
+			result++;
+		}
+	}
+	Broodwar->sendText("%i",result);
+	if(result >= 6)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+void ReuniteExplorerGroup(Unit *leader,std::map<int,int> groups,int *numGroups)
+{
+	int k = 0;
+	for(std::set<Unit *>::const_iterator i = Broodwar->self()->getUnits().begin(); i!= Broodwar->self()->getUnits().end();i++)
+	{
+		if(!(*i)->getType().isWorker() && !(*i)->getType().isBuilding() && !(*i)->isFollowing())
+		{
+			(*i)->follow(leader);
+			k++;
+		}
+		if(k >= 5)
+		{
+			break;
+		}
+	}
+	groups.insert(std::pair<int,int>((*numGroups),leader->getID()));
+}
+
+void MoveGroupOfExplorers(std::set<Position> PositionsVisited,std::map<int,int> groups,int numGroups)
+{
+	Position movimento = Position(rand()%(Broodwar->mapWidth()*32),rand()%(Broodwar->mapHeight()*32));
+	Unit *leader;
+	if(!isVisited(movimento,PositionsVisited))
+	{
+		for(int i = 0; i < numGroups;i++)
+		{
+			leader = Broodwar->getUnit(groups.find(i)->second);
+			leader->move(movimento);
+		}
+	}
+}
+
+void GatherMinerals(Unit *worker)
+{
+	Unit *closestMineral = NULL;
+	for(std::set<Unit*>::const_iterator m=Broodwar->getMinerals().begin();m!=Broodwar->getMinerals().end();m++)
+	{
+		if (closestMineral == NULL || worker->getDistance(*m)<worker->getDistance(closestMineral)) 
+		{
+			closestMineral=*m;
+		}
+	}
+	if(closestMineral != NULL)
+	{
+		worker->gather(closestMineral);  // send the workers to mine
+	}
+}
+
+TilePosition GetBuildPosition(TilePosition buildTilePosition,UnitType building,int n)
+{
+	TilePosition aux;
+	if(buildTilePosition.x() > (Broodwar->mapWidth()/2))
+	{
+		if(buildTilePosition.y() > (Broodwar->mapHeight()/2))
+		{
+			aux.x() = buildTilePosition.x() - rand()%n;
+			aux.y() = buildTilePosition.y() - rand()%n;
+			Broodwar->drawCircle(CoordinateType::Map,aux.x()*32,aux.y()*32,10,Colors::Red,false);
+		}
+		else if(buildTilePosition.y() <= Broodwar->mapHeight())
+		{
+			aux.x() = buildTilePosition.x() - rand()%n;
+			aux.y() = buildTilePosition.y() + rand()%n;
+			Broodwar->drawCircle(CoordinateType::Map,aux.x()*32,aux.y()*32,10,Colors::Red,false);
+		}
+	}
+	else if(buildTilePosition.x() <= (Broodwar->mapWidth()/2))
+	{
+		if(buildTilePosition.y() > (Broodwar->mapHeight()/2))
+		{
+
+			aux.x() = buildTilePosition.x() + rand()%n;
+			aux.y() = buildTilePosition.y() - rand()%n;
+			Broodwar->drawCircle(CoordinateType::Map,aux.x()*32,aux.y()*32,10,Colors::Red,false);
+		}
+		else if(buildTilePosition.y() <= Broodwar->mapHeight())
+		{
+			aux.x() = buildTilePosition.x() + rand()%n;
+			aux.y() = buildTilePosition.y() + rand()%n;
+			Broodwar->drawCircle(CoordinateType::Map,aux.x()*32,aux.y()*32,10,Colors::Red,false);
+		}
+	}
+	return aux;
+}
+
+bool CheckTilePosition(TilePosition WhereToBuildPylon,UnitType building)
+{
+	for(std::set<Unit *>::const_iterator i = Broodwar->self()->getUnits().begin(); i!= Broodwar->self()->getUnits().end();i++)
+	{
+		if((*i)->getType().isWorker())
+		{
+			if(Broodwar->canBuildHere((*i),WhereToBuildPylon,building))
+			{
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+Unit *GetWorker()
+{
+	for(std::set<Unit*>::const_iterator i=Broodwar->self()->getUnits().begin();i!=Broodwar->self()->getUnits().end();i++)
+	{
+		if((*i)->getType().isWorker())
+		{
+			return (*i);
+		}
+	}
 }
 
 bool analyzed;
@@ -27,6 +322,14 @@ int reset;
 std::set<Position> PositionsVisited;
 std::set<Position>::const_iterator iter;
 bool NotVisited;
+bool InGame2;
+int LastBuildingPrice;
+BuildCell *BManager;
+int timeNewGat2;
+UnitType LastBuilt;
+bool Buildings[3];
+std::map<int,int> groups;
+int NumGroups = 0;
 
 void Explore::onStart()
 {
@@ -34,7 +337,7 @@ void Explore::onStart()
   Broodwar->enableFlag(Flag::UserInput);
   // Uncomment to enable complete map information
   //Broodwar->enableFlag(Flag::CompleteMapInformation);
-
+  Broodwar->setLocalSpeed(1);
   //read map information into BWTA so terrain analysis can be done in another thread
   BWTA::readMap();
   analyzed=false;
@@ -43,6 +346,7 @@ void Explore::onStart()
   show_bullets=false;
   show_visibility_data=false;
 
+  InGame2 = false;
   NotVisited = true;
   reset = 0;
 
@@ -58,6 +362,22 @@ void Explore::onEnd(bool isWinner)
 
 void Explore::onFrame()
 {
+	if(!InGame2) // if its the first frame in the game
+	{
+		LastBuildingPrice = 0;
+		BManager = InitializeBuildManager();
+		timeNewGat2 = 0;
+		LastBuilt = UnitTypes::None;
+		for(std::set<Unit*>::const_iterator i=Broodwar->self()->getUnits().begin();i!=Broodwar->self()->getUnits().end();i++)
+		{
+			if((*i)->getType() == UnitTypes::Protoss_Cybernetics_Core)
+			{
+				Buildings[cyber] = true;
+			}
+		}
+		InGame2 = true;
+	}
+
   if (show_visibility_data)
     drawVisibilityData();
 
@@ -100,68 +420,138 @@ void Explore::onFrame()
   {
     analysis_just_finished=false;
   }
-  reset = 0;
-	for (std::set<Unit*>::const_iterator i = Broodwar->self()->getUnits().begin(); i != Broodwar->self()->getUnits().end(); i++) 
+	reset = 0;
+	PrintBuildList(BManager);
+	for(std::set<Unit*>::const_iterator i = Broodwar->self()->getUnits().begin(); i != Broodwar->self()->getUnits().end(); i++) 
 	{
+		if(LastBuilt == (*i)->getType() && (*i)->isBeingConstructed()) // reset the total of the current minerals in use
+		{
+			Broodwar->sendText("The building is beeing constructed!");
+			LastBuilt = UnitTypes::None;
+			LastBuildingPrice = 0;
+		}
 		if (!(*i)->getType().isWorker() && (*i)->isIdle() && (*i)->canIssueCommand(UnitCommand::move((*i),Position(0,0),false)) && (*i)->isCompleted()) 
 		{
 			Position movimento = Position(rand()%(Broodwar->mapWidth()*32),rand()%(Broodwar->mapHeight()*32));
-			if(Broodwar->self()->getRace() == Races::Zerg)
+			if(!isVisited(movimento,PositionsVisited))
 			{
-				if((*i)->getType() != UnitTypes::Zerg_Overlord && (*i)->getType() != UnitTypes::Zerg_Larva)
-				{
-					if(!isVisited(movimento,PositionsVisited))
-					{
-						if((*i)->move(movimento))
-						{
-							Broodwar->sendText("Adicionado");
-							PositionsVisited.insert(movimento);
-						}
-					}
-					else
-					{
-						reset++;
-					}
-				}
+				(*i)->move(movimento);
 			}
 			else
 			{
-				if(!isVisited(movimento,PositionsVisited))
+				reset++;
+			}
+		}
+		if((*i)->getType().isWorker())
+		{
+			if((*i)->isIdle())
+			{
+				GatherMinerals((*i)); // if the worker is doing nothing, go mine!
+			}
+			if(!(*i)->isCarryingMinerals() && !(*i)->isCarryingGas())
+			{
+				if(Broodwar->self()->minerals() >= BWAPI::UnitTypes::Protoss_Gateway.mineralPrice())
 				{
-					if((*i)->move(movimento))
+					TilePosition Pylon = findPylon((*i)->getTilePosition()); // gets the closest pylon
+					Broodwar->drawCircle(CoordinateType::Map,Pylon.x()*32,Pylon.y()*32,10,Colors::Red,false);
+					if(Pylon != TilePosition(0,0)) // if there is a pylon
 					{
-						Broodwar->sendText("Adicionado");
-						PositionsVisited.insert(movimento);
+						if(!Buildings[gate] && Broodwar->self()->allUnitCount(UnitTypes::Protoss_Gateway) < 5) // if its time to build a gateway
+						{
+							Broodwar->sendText("i´ll try to build a gateway");
+							Pylon = GetConstructionPosition(Pylon,15);
+							Broodwar->drawCircle(CoordinateType::Map,Pylon.x()*32,Pylon.y()*32,10,Colors::Red,false);
+							if(Broodwar->canBuildHere((*i),Pylon,UnitTypes::Protoss_Gateway,true)) //if we can build the gateway there
+							{
+								Broodwar->sendText("Gateway could be built");
+								Buildings[gate] = true;
+								timeNewGat2 = Broodwar->getFrameCount()/24; // set the timer
+								AddBuildingList(BManager,Pylon,UnitTypes::Protoss_Gateway,false); // add the gateway to the build list
+							}
+							else
+							{
+								Broodwar->sendText("Gateway couldn´t be built");
+								Buildings[gate] = false; // if it was not possible to build there, we just try it again next frame
+							}
+						}
+						else if(!Buildings[cyber]) // if there is no cybernetics core, we try to build one
+						{
+							Broodwar->sendText("i´ll try to build a cybernetics core");
+							Pylon = GetConstructionPosition(Pylon,15);
+							Broodwar->drawCircle(CoordinateType::Map,Pylon.x(),Pylon.y(),10,Colors::Red,true);
+							if(Broodwar->canBuildHere((*i),Pylon,UnitTypes::Protoss_Cybernetics_Core,true)) //if we can build there
+							{
+								Broodwar->sendText("cybernetics core could be built");
+								Buildings[cyber] = true;  // we set true so that we know that we now can build Dragoons!
+								AddBuildingList(BManager,Pylon,UnitTypes::Protoss_Cybernetics_Core,false); // add to the build list
+							}
+							else
+							{
+								Broodwar->sendText("cybernetics core couldn´t be built");
+								Buildings[cyber] = false; // if fail, we try again next frame
+							}
+						}
 					}
 				}
-				else
+				if(!BuildFirstList(BManager,(*i),&LastBuilt,&LastBuildingPrice,Buildings)) // if it wasn´t possible to build
 				{
-					reset++;
+
 				}
 			}
 		}
-		if((*i)->getType().isWorker() && (*i)->isIdle())
+		if((*i)->getType().isResourceDepot())
 		{
-			Unit *closestMineral = NULL;
-			for(std::set<Unit*>::const_iterator m=Broodwar->getMinerals().begin();m!=Broodwar->getMinerals().end();m++)
-			{
-					if (closestMineral == NULL || (*i)->getDistance(*m)<(*i)->getDistance(closestMineral)) 
-						closestMineral=*m;
-
+			if(Broodwar->self()->supplyUsed() + 4  >= Broodwar->self()->supplyTotal() && !Buildings[pylo])
+			{ // if is time to build a pylon
+				Broodwar->sendText("Trying to build pylon");
+				TilePosition WhereToBuildPylon = GetBuildPosition((*i)->getTilePosition(),UnitTypes::Protoss_Pylon,15);
+				Broodwar->drawCircle(CoordinateType::Map,WhereToBuildPylon.x()*32,WhereToBuildPylon.y()*32,10,Colors::Green,false);
+				if(CheckTilePosition(WhereToBuildPylon,UnitTypes::Protoss_Pylon))
+				{
+					Buildings[pylo] = true;
+					Broodwar->sendText("pylon can be build!");
+					AddBuildingList(BManager,WhereToBuildPylon,UnitTypes::Protoss_Pylon,true);
+				}
+				else
+				{
+					Broodwar->sendText("pylon can´t be build!");
+					Buildings[pylo] = false;
+				}
 			}
-			if(closestMineral != NULL)
+			if((*i)->isIdle() && Broodwar->self()->minerals() >= UnitTypes::Protoss_Probe.mineralPrice() + LastBuilt.mineralPrice())
 			{
-				(*i)->gather(closestMineral);  // send the workers to mine
+				(*i)->train(UnitTypes::Protoss_Probe); // if we can train new workers, why not?
+			}
+		}
+		if((*i)->getType() == BWAPI::UnitTypes::Protoss_Gateway && (*i)->isIdle())
+		{
+			if(Broodwar->self()->minerals() >= BWAPI::UnitTypes::Protoss_Dragoon.mineralPrice() + LastBuilt.mineralPrice() && Broodwar->self()->gas() >= BWAPI::UnitTypes::Protoss_Dragoon.gasPrice())
+			{
+				if(Buildings[cyber])
+				{
+					if(rand()%2 == 1)
+					{
+						(*i)->train(BWAPI::UnitTypes::Protoss_Dragoon);
+					}
+				}
+			}
+			if(Broodwar->self()->minerals() >= BWAPI::UnitTypes::Protoss_Zealot.mineralPrice() + LastBuilt.mineralPrice())
+			{
+				(*i)->train(BWAPI::UnitTypes::Protoss_Zealot);
 			}
 		}
 	}
 	for(iter = PositionsVisited.begin();iter != PositionsVisited.end();iter++)
 	{
-		Broodwar->drawCircle(CoordinateType::Map,(*iter).x(),(*iter).y(),225,Colors::Red,false);
+		Broodwar->drawCircle(CoordinateType::Map,(*iter).x(),(*iter).y(),150,Colors::Red,false);
 	}
-	if(reset >= 15)
+	if(reset >= 5)
 	{
 		PositionsVisited.clear();
+	}
+	if(Broodwar->getFrameCount()/24 - timeNewGat2 >= 60)
+	{
+		Buildings[gate] = 0;
 	}
 }
 
@@ -468,4 +858,8 @@ void Explore::onUnitComplete(BWAPI::Unit *unit)
 {
   if (!Broodwar->isReplay() && Broodwar->getFrameCount()>1)
     Broodwar->sendText("A %s [%x] has been completed at (%d,%d)",unit->getType().getName().c_str(),unit,unit->getPosition().x(),unit->getPosition().y());
+  if(unit->getType() == UnitTypes::Protoss_Pylon)
+  {
+	  Buildings[pylo] = false;
+  }
 }
