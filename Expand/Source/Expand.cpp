@@ -998,7 +998,7 @@ void Expand::onFrame()
 			{
 				Broodwar->sendText("Possui pylon e dinheiro!!");
 				if(!BuiltGat)
-					{
+				{
 					Pylon = TilePosition(Pylon.x()+rand()%30,Pylon.y()+rand()%30);
 					Broodwar->drawCircle(CoordinateType::Map,Pylon.x()*32,Pylon.y()*32,10,Colors::Red,false);
 					if((*i)->build(Pylon,UnitTypes::Protoss_Gateway))
@@ -1011,7 +1011,7 @@ void Expand::onFrame()
 						BuiltGat = false;
 					}
 				}
-					if(!BuiltResearch)
+				if(!BuiltResearch)
 				{
 					Pylon = TilePosition(Pylon.x()+rand()%30,Pylon.y()+rand()%30);
 					Broodwar->drawCircle(CoordinateType::Map,Pylon.x(),Pylon.y(),10,Colors::Red,true);
