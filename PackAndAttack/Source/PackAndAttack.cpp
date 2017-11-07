@@ -3,6 +3,125 @@
 
 using namespace BWAPI;
 
+#define pylo 0
+#define cyber 1
+#define gate 2
+
+typedef struct BuildCell{
+	TilePosition BuildTilePosition;
+	UnitType building;
+	struct BuildCell *prox;
+}BuildCell;
+
+BuildCell *InitializeBuildManager()
+{
+	BuildCell *BManager;
+	BManager = (BuildCell *)malloc(sizeof(BuildCell));
+	BManager->building = UnitTypes::None;
+	BManager->BuildTilePosition = TilePosition(0,0);
+	BManager->prox = NULL;
+	return BManager;
+}
+
+void AddBuildingList(BuildCell *BManager,TilePosition buildingTilePosition,UnitType building,bool priority)
+{
+	BuildCell *aux = BManager;
+	BuildCell *NewCell = (BuildCell *)malloc(sizeof(BuildCell));
+	NewCell->building = building;
+	NewCell->BuildTilePosition = buildingTilePosition;
+	NewCell->prox = NULL;
+	if(priority)
+	{
+		NewCell->prox = BManager->prox;
+		BManager->prox = NewCell;
+	}
+	else
+	{
+		while(aux->prox != NULL)
+		{
+			aux = aux->prox;
+		}
+		aux->prox = NewCell;
+	}
+}
+
+bool CheckUnitInBuildList(BuildCell *BManager,UnitType building)
+{
+	BuildCell *aux;
+	aux = BManager;
+	while(aux != NULL)
+	{
+		if(aux->building == building)
+		{
+			return true;
+		}
+		aux = aux->prox;
+	}
+	return false;
+}
+
+void PrintBuildList(BuildCell *BManager)
+{
+	int i = 1;
+	BuildCell *aux;
+	aux = BManager->prox;
+	while(aux != NULL)
+	{
+		Broodwar->sendText("%i- %s {%i,%i}",i,aux->building.getName().c_str(),aux->BuildTilePosition.x(),aux->BuildTilePosition.y());
+		i++;
+		aux = aux->prox;
+	}
+
+}
+
+bool BuildFirstList(BuildCell *BManager,Unit *u,UnitType *LastBuilt,int *LastBuildingPrice,bool *Buildings)
+{
+	if(BManager->prox != NULL && BManager->prox->building != UnitTypes::None)
+	{
+		Broodwar->sendText("is not empty");
+	 	if(Broodwar->self()->minerals() - (*LastBuildingPrice) >= BManager->prox->building.mineralPrice())
+		{
+			Broodwar->sendText("there is mineral to build");
+			if(Broodwar->canBuildHere(u,BManager->prox->BuildTilePosition,BManager->prox->building,true))
+			{
+				Broodwar->sendText("we can build there");
+				if(u->build(BManager->prox->BuildTilePosition,BManager->prox->building))
+				{
+					Broodwar->sendText("the unit went to build");
+					(*LastBuildingPrice) += BManager->prox->building.mineralPrice();
+					(*LastBuilt) = BManager->prox->building;
+
+					u->build(BManager->prox->BuildTilePosition,BManager->prox->building);
+					
+					Broodwar->sendText("The Building %s is now beeing constructed!",BManager->prox->building.getName().c_str());
+					BManager->prox = BManager->prox->prox;
+					return true;
+				}
+			}
+			else
+			{
+				BuildCell *aux = BManager->prox;
+				BManager->prox = BManager->prox->prox;
+				aux->prox = NULL;
+				if(aux->building == UnitTypes::Protoss_Pylon)
+				{
+					Buildings[pylo] = false;
+				}
+				else if(aux->building == UnitTypes::Protoss_Cybernetics_Core)
+				{
+					Buildings[cyber] = false;			
+				}
+				else if(aux->building == UnitTypes::Protoss_Gateway)
+				{
+					Buildings[gate] = false;
+				}
+				free(aux);
+			}
+		}
+	}
+	return false;
+}
+
 int distance(int x1,int y1,int x2,int y2)
 {
 	int a = ((x1-x2)*(x1-x2));
@@ -41,10 +160,19 @@ bool analyzed2;
 bool analysis_just_finished2;
 BWTA::Region* home2;
 BWTA::Region* enemy_base2;
-int IdExplorador;
-Position WhereToAttack;
-Position reunite;
-std::set<BWTA::Chokepoint*> chokepoints;
+
+
+int IdExplorador; // the explorer unit´s ID
+BuildCell *BManager; // the manager that controls the buildings actions
+int timeNewGat3; // the time that the last gateway was built
+UnitType LastBuilt2; // the last building constructed
+int LastBuildingPrice; // the price of the last building constructed 
+bool build[3]; // the vector of boolean values that controls when to add a new building in the list
+
+Position WhereToAttack; // position to attack the enemy
+Position reunite; // the position to reunite the army
+std::set<BWTA::Chokepoint*> chokepoints; // the chokepoints
+std::set<Position>reunitePoints; //the vector of reunited positions
 int i;
 
 
@@ -155,26 +283,27 @@ void PackAndAttack::onFrame()
 		 reunite = MoveClosestBaseOrChokePoint((*a),chokepoints);
 		 if(reunite != Position(0,0))
 		 {
+			 reunitePoints.insert(reunite);
 			 (*a)->move(reunite);
 		 }
+	  }
+	  if((*a)->getType().isWorker())
+	  {
+
 	  }
   }
   if(WhereToAttack != Position(0,0))
   {
-		int aux2;
-		Unit *aux;
-		std::set<Unit *> GroupOfAttack;
-		for(std::set<Unit*>::const_iterator i=Broodwar->self()->getUnits().begin();i!=Broodwar->self()->getUnits().end();i++)
-		{
-			GroupOfAttack = Broodwar->getUnitsInRadius(reunite,50);
-			if(GroupOfAttack.size() >= 6)
-			{
-				for(std::set<Unit*>::const_iterator m=GroupOfAttack.begin();m!=GroupOfAttack.end();m++)
+	  for(std::set<Position>::const_iterator i=reunitePoints.begin();i != reunitePoints.end();i++)
+	  {
+		  for(std::set<Unit *>::const_iterator a=Broodwar->getUnitsInRadius((*i),150).begin();a!=Broodwar->getUnitsInRadius((*i),150).end();a++)
+		  {
+			  	if(!(*a)->getType().isWorker() && (*a)->isIdle())
 				{
-					(*m)->attack(WhereToAttack);
+					(*a)->attack(WhereToAttack);
 				}
-			}
-		} 
+		  }
+	  }
   }
 }
 

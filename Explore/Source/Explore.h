@@ -12,6 +12,7 @@ DWORD WINAPI AnalyzeThread();
 
 class Explore : public BWAPI::AIModule
 {
+
 public:
   virtual void onStart();
   virtual void onEnd(bool isWinner);
