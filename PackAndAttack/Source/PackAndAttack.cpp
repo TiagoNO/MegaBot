@@ -7,33 +7,33 @@ using namespace BWAPI;
 #define cyber 1
 #define gate 2
 
-typedef struct BuildCell{
+typedef struct BuildCell2{
 	TilePosition BuildTilePosition;
 	UnitType building;
-	struct BuildCell *prox;
-}BuildCell;
+	struct BuildCell2 *prox;
+}BuildCell2;
 
-BuildCell *InitializeBuildManager()
+BuildCell2 *InitializeBuildManager()
 {
-	BuildCell *BManager;
-	BManager = (BuildCell *)malloc(sizeof(BuildCell));
-	BManager->building = UnitTypes::None;
-	BManager->BuildTilePosition = TilePosition(0,0);
-	BManager->prox = NULL;
-	return BManager;
+	BuildCell2 *BManager2;
+	BManager2 = (BuildCell2 *)malloc(sizeof(BuildCell2));
+	BManager2->building = UnitTypes::None;
+	BManager2->BuildTilePosition = TilePosition(0,0);
+	BManager2->prox = NULL;
+	return BManager2;
 }
 
-void AddBuildingList(BuildCell *BManager,TilePosition buildingTilePosition,UnitType building,bool priority)
+void AddBuildingList2(BuildCell2 *BManager2,TilePosition buildingTilePosition,UnitType building,bool priority)
 {
-	BuildCell *aux = BManager;
-	BuildCell *NewCell = (BuildCell *)malloc(sizeof(BuildCell));
+	BuildCell2 *aux = BManager2;
+	BuildCell2 *NewCell = (BuildCell2 *)malloc(sizeof(BuildCell2));
 	NewCell->building = building;
 	NewCell->BuildTilePosition = buildingTilePosition;
 	NewCell->prox = NULL;
 	if(priority)
 	{
-		NewCell->prox = BManager->prox;
-		BManager->prox = NewCell;
+		NewCell->prox = BManager2->prox;
+		BManager2->prox = NewCell;
 	}
 	else
 	{
@@ -45,10 +45,10 @@ void AddBuildingList(BuildCell *BManager,TilePosition buildingTilePosition,UnitT
 	}
 }
 
-bool CheckUnitInBuildList(BuildCell *BManager,UnitType building)
+bool CheckUnitInBuildList(BuildCell2 *BManager2,UnitType building)
 {
-	BuildCell *aux;
-	aux = BManager;
+	BuildCell2 *aux;
+	aux = BManager2;
 	while(aux != NULL)
 	{
 		if(aux->building == building)
@@ -60,48 +60,34 @@ bool CheckUnitInBuildList(BuildCell *BManager,UnitType building)
 	return false;
 }
 
-void PrintBuildList(BuildCell *BManager)
+bool BuildFirstList(BuildCell2 *BManager2,Unit *u,UnitType *LastBuilt,int *LastBuildingPrice2,bool *Buildings)
 {
-	int i = 1;
-	BuildCell *aux;
-	aux = BManager->prox;
-	while(aux != NULL)
-	{
-		Broodwar->sendText("%i- %s {%i,%i}",i,aux->building.getName().c_str(),aux->BuildTilePosition.x(),aux->BuildTilePosition.y());
-		i++;
-		aux = aux->prox;
-	}
-
-}
-
-bool BuildFirstList(BuildCell *BManager,Unit *u,UnitType *LastBuilt,int *LastBuildingPrice,bool *Buildings)
-{
-	if(BManager->prox != NULL && BManager->prox->building != UnitTypes::None)
+	if(BManager2->prox != NULL && BManager2->prox->building != UnitTypes::None)
 	{
 		Broodwar->sendText("is not empty");
-	 	if(Broodwar->self()->minerals() - (*LastBuildingPrice) >= BManager->prox->building.mineralPrice())
+	 	if(Broodwar->self()->minerals() - (*LastBuildingPrice2) >= BManager2->prox->building.mineralPrice())
 		{
 			Broodwar->sendText("there is mineral to build");
-			if(Broodwar->canBuildHere(u,BManager->prox->BuildTilePosition,BManager->prox->building,true))
+			if(Broodwar->canBuildHere(u,BManager2->prox->BuildTilePosition,BManager2->prox->building,true))
 			{
 				Broodwar->sendText("we can build there");
-				if(u->build(BManager->prox->BuildTilePosition,BManager->prox->building))
+				if(u->build(BManager2->prox->BuildTilePosition,BManager2->prox->building))
 				{
 					Broodwar->sendText("the unit went to build");
-					(*LastBuildingPrice) += BManager->prox->building.mineralPrice();
-					(*LastBuilt) = BManager->prox->building;
+					(*LastBuildingPrice2) += BManager2->prox->building.mineralPrice();
+					(*LastBuilt) = BManager2->prox->building;
 
-					u->build(BManager->prox->BuildTilePosition,BManager->prox->building);
+					u->build(BManager2->prox->BuildTilePosition,BManager2->prox->building);
 					
-					Broodwar->sendText("The Building %s is now beeing constructed!",BManager->prox->building.getName().c_str());
-					BManager->prox = BManager->prox->prox;
+					Broodwar->sendText("The Building %s is now beeing constructed!",BManager2->prox->building.getName().c_str());
+					BManager2->prox = BManager2->prox->prox;
 					return true;
 				}
 			}
 			else
 			{
-				BuildCell *aux = BManager->prox;
-				BManager->prox = BManager->prox->prox;
+				BuildCell2 *aux = BManager2->prox;
+				BManager2->prox = BManager2->prox->prox;
 				aux->prox = NULL;
 				if(aux->building == UnitTypes::Protoss_Pylon)
 				{
@@ -163,10 +149,10 @@ BWTA::Region* enemy_base2;
 
 
 int IdExplorador; // the explorer unit´s ID
-BuildCell *BManager; // the manager that controls the buildings actions
+BuildCell2 *BManager2; // the manager that controls the buildings actions
 int timeNewGat3; // the time that the last gateway was built
 UnitType LastBuilt2; // the last building constructed
-int LastBuildingPrice; // the price of the last building constructed 
+int LastBuildingPrice2; // the price of the last building constructed 
 bool build[3]; // the vector of boolean values that controls when to add a new building in the list
 
 Position WhereToAttack; // position to attack the enemy

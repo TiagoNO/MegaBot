@@ -158,24 +158,19 @@ void MatchData::writeDetailedResult() {
     float oldScore = 0;
     float score = 0;
     float alpha = Configuration::getInstance()->alpha; //alias for easy reading
-
+	frameNode = NULL;
 	if(Broodwar->getFrameCount() - 4286 <= rootNode->LastChildElement("frame")->IntAttribute("value"))
 	{
 		frameNode = rootNode->LastChildElement("frame");
 	}
-	else
-	{
-		frameNode = doc.NewElement("frame");
-		frameNode->SetAttribute("value",Broodwar->getFrameCount());
-		rootNode->InsertEndChild(frameNode);
-		frameNode = rootNode->LastChildElement("frame");
-	}
-	if(frameNode == NULL)
+	else if(frameNode == NULL)
 	{
 		frameNode = doc.NewElement("frame");
 		frameNode->SetAttribute("value",Broodwar->getFrameCount());
 		rootNode->InsertEndChild(frameNode);
 	}
+
+
 	myBehvNode = frameNode->FirstChildElement(myBehaviorName.c_str());
 	if (myBehvNode == NULL) 
 	{
