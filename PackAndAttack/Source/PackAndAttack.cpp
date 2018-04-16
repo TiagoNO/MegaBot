@@ -1,31 +1,182 @@
 #include "PackAndAttack.h"
+#include <math.h>
+
 using namespace BWAPI;
 
-bool analyzed;
-bool analysis_just_finished;
-BWTA::Region* home;
-BWTA::Region* enemy_base;
-int IdExplorador;
-Position WhereToAttack;
-int i;
+#define pylo 0
+#define cyber 1
+#define gate 2
 
+typedef struct Group{
+	std::set<Unit> UnitsInGroup;
+	struct Group *nextGroup;
+}GroupType;
+
+typedef struct BuildCell2{
+	TilePosition BuildTilePosition;
+	UnitType building;
+	struct BuildCell2 *prox;
+}BuildCell2;
+
+BuildCell2 *InitializeBuildManager()
+{
+	BuildCell2 *BManager2;
+	BManager2 = (BuildCell2 *)malloc(sizeof(BuildCell2));
+	BManager2->building = UnitTypes::None;
+	BManager2->BuildTilePosition = TilePosition(0,0);
+	BManager2->prox = NULL;
+	return BManager2;
+}
+
+void AddBuildingList2(BuildCell2 *BManager2,TilePosition buildingTilePosition,UnitType building,bool priority)
+{
+	BuildCell2 *aux = BManager2;
+	BuildCell2 *NewCell = (BuildCell2 *)malloc(sizeof(BuildCell2));
+	NewCell->building = building;
+	NewCell->BuildTilePosition = buildingTilePosition;
+	NewCell->prox = NULL;
+	if(priority)
+	{
+		NewCell->prox = BManager2->prox;
+		BManager2->prox = NewCell;
+	}
+	else
+	{
+		while(aux->prox != NULL)
+		{
+			aux = aux->prox;
+		}
+		aux->prox = NewCell;
+	}
+}
+
+bool CheckUnitInBuildList(BuildCell2 *BManager2,UnitType building)
+{
+	BuildCell2 *aux;
+	aux = BManager2;
+	while(aux != NULL)
+	{
+		if(aux->building == building)
+		{
+			return true;
+		}
+		aux = aux->prox;
+	}
+	return false;
+}
+
+bool BuildFirstList(BuildCell2 *BManager2,Unit *u,UnitType *LastBuilt,int *LastBuildingPrice2,bool *Buildings)
+{
+	if(BManager2->prox != NULL && BManager2->prox->building != UnitTypes::None)
+	{
+		Broodwar->sendText("is not empty");
+	 	if(Broodwar->self()->minerals() - (*LastBuildingPrice2) >= BManager2->prox->building.mineralPrice())
+		{
+			Broodwar->sendText("there is mineral to build");
+			if(Broodwar->canBuildHere(u,BManager2->prox->BuildTilePosition,BManager2->prox->building,true))
+			{
+				Broodwar->sendText("we can build there");
+				if(u->build(BManager2->prox->BuildTilePosition,BManager2->prox->building))
+				{
+					Broodwar->sendText("the unit went to build");
+					(*LastBuildingPrice2) += BManager2->prox->building.mineralPrice();
+					(*LastBuilt) = BManager2->prox->building;
+
+					u->build(BManager2->prox->BuildTilePosition,BManager2->prox->building);
+					
+					Broodwar->sendText("The Building %s is now beeing constructed!",BManager2->prox->building.getName().c_str());
+					BManager2->prox = BManager2->prox->prox;
+					return true;
+				}
+			}
+			else
+			{
+				BuildCell2 *aux = BManager2->prox;
+				BManager2->prox = BManager2->prox->prox;
+				aux->prox = NULL;
+				if(aux->building == UnitTypes::Protoss_Pylon)
+				{
+					Buildings[pylo] = false;
+				}
+				else if(aux->building == UnitTypes::Protoss_Cybernetics_Core)
+				{
+					Buildings[cyber] = false;			
+				}
+				else if(aux->building == UnitTypes::Protoss_Gateway)
+				{
+					Buildings[gate] = false;
+				}
+				free(aux);
+			}
+		}
+	}
+	return false;
+}
+
+int distance(int x1,int y1,int x2,int y2)
+{
+	int a = ((x1-x2)*(x1-x2));
+	int b = ((y1-y2)*(y1-y2));
+	return (int)sqrt((double)a+b);
+}
+
+Position MoveClosestBaseOrChokePoint(Unit *unit,std::set<BWTA::Chokepoint*> chokepoints)
+{
+	Position closest = Position(0,0);
+	for(std::set<BWTA::Chokepoint*>::const_iterator chokes=chokepoints.begin();chokes!=chokepoints.end();chokes++)
+	{
+		if(closest == Position(0,0))
+		{
+			closest = (*chokes)->getCenter();
+		}
+		else if(distance(unit->getPosition().x(),unit->getPosition().y(),(*chokes)->getCenter().x(),(*chokes)->getCenter().y()) < distance(unit->getPosition().x(),unit->getPosition().y(),closest.x(),closest.y()))
+		{
+			closest = (*chokes)->getCenter();
+		}
+	}
+	for(std::set<Unit *>::const_iterator bases=Broodwar->self()->getUnits().begin();bases!=Broodwar->self()->getUnits().end();bases++)
+	{
+		if((*bases)->getType().isResourceDepot())
+		{
+			if(distance(unit->getPosition().x(),unit->getPosition().y(),(*bases)->getPosition().x(),(*bases)->getPosition().y()) < distance(unit->getPosition().x(),unit->getPosition().y(),closest.x(),closest.y()))
+			{
+				closest = (*bases)->getPosition();
+			}
+		}
+	}
+	return closest;
+}
+
+bool analyzed2;
+bool analysis_just_finished2;
+BWTA::Region* home2;
+BWTA::Region* enemy_base2;
+
+
+int IdExplorador; // the explorer unit´s ID
+BuildCell2 *BManager2; // the manager that controls the buildings actions
+int timeNewGat3; // the time that the last gateway was built
+UnitType LastBuilt2; // the last building constructed
+int LastBuildingPrice2; // the price of the last building constructed 
+bool build[3]; // the vector of boolean values that controls when to add a new building in the list
+
+Position WhereToAttack; // position to attack the enemy
+Position reunite; // the position to reunite the army
+std::set<BWTA::Chokepoint*> chokepoints; // the chokepoints
+std::set<Position>reunitePoints; //the vector of reunited positions
+GroupType *Troops;
 
 
 void PackAndAttack::onStart()
 {
   IdExplorador = -1;
   WhereToAttack = Position(0,0);
-  Broodwar->sendText("Hello world!");
-  Broodwar->printf("The map is %s, a %d player map",Broodwar->mapName().c_str(),Broodwar->getStartLocations().size());
-  // Enable some cheat flags
-  Broodwar->enableFlag(Flag::UserInput);
-  // Uncomment to enable complete map information
-  //Broodwar->enableFlag(Flag::CompleteMapInformation);
 
-  //read map information into BWTA so terrain analysis can be done in another thread
+  Broodwar->enableFlag(Flag::UserInput);
+
   BWTA::readMap();
-  analyzed=false;
-  analysis_just_finished=false;
+  analyzed2=false;
+  analysis_just_finished2=false;
 
   show_bullets=false;
   show_visibility_data=false;
@@ -43,11 +194,6 @@ void PackAndAttack::onStart()
   }
   else
   {
-    Broodwar->printf("The match up is %s v %s",
-      Broodwar->self()->getRace().getName().c_str(),
-      Broodwar->enemy()->getRace().getName().c_str());
-
-    //send each worker to the mineral field that is closest to it
     for(std::set<Unit*>::const_iterator i=Broodwar->self()->getUnits().begin();i!=Broodwar->self()->getUnits().end();i++)
     {
       if ((*i)->getType().isWorker())
@@ -55,37 +201,8 @@ void PackAndAttack::onStart()
 		if(IdExplorador == -1)
 		{
 			IdExplorador = (*i)->getID();
-			int x = rand()%(Broodwar->mapWidth()*32);
-			int y = rand()%(Broodwar->mapHeight()*32);
-			Position movimento = Position(x,y);
-			Broodwar->sendText("% %i (x,y)",x,y);
-			(*i)->move(movimento);
+			break;
 		}
-        Unit* closestMineral=NULL;
-        for(std::set<Unit*>::iterator m=Broodwar->getMinerals().begin();m!=Broodwar->getMinerals().end();m++)
-        {
-          if (closestMineral==NULL || (*i)->getDistance(*m)<(*i)->getDistance(closestMineral))
-            closestMineral=*m;
-        }
-		if (closestMineral!=NULL && (*i)->getID() != IdExplorador)
-          (*i)->rightClick(closestMineral);
-      }
-      else if ((*i)->getType().isResourceDepot())
-      {
-        //if this is a center, tell it to build the appropiate type of worker
-        if ((*i)->getType().getRace()!=Races::Zerg)
-        {
-          (*i)->train(Broodwar->self()->getRace().getWorker());
-        }
-        else //if we are Zerg, we need to select a larva and morph it into a drone
-        {
-          std::set<Unit*> myLarva=(*i)->getLarva();
-          if (myLarva.size()>0)
-          {
-            Unit* larva=*myLarva.begin();
-            larva->morph(UnitTypes::Zerg_Drone);
-          }
-        }
       }
     }
   }
@@ -101,125 +218,6 @@ void PackAndAttack::onEnd(bool isWinner)
 
 void PackAndAttack::onFrame()
 {
-  if (show_visibility_data)
-    drawVisibilityData();
-
-  if (show_bullets)
-    drawBullets();
-
-  if (Broodwar->isReplay())
-    return;
-
-  drawStats();
-  if (analyzed && Broodwar->getFrameCount()%30==0)
-  {
-    //order one of our workers to guard our chokepoint.
-    for(std::set<Unit*>::const_iterator i=Broodwar->self()->getUnits().begin();i!=Broodwar->self()->getUnits().end();i++)
-    {
-      if ((*i)->getType().isWorker())
-      {
-        //get the chokepoints linked to our home region
-        std::set<BWTA::Chokepoint*> chokepoints= home->getChokepoints();
-        double min_length=10000;
-        BWTA::Chokepoint* choke=NULL;
-
-        //iterate through all chokepoints and look for the one with the smallest gap (least width)
-        for(std::set<BWTA::Chokepoint*>::iterator c=chokepoints.begin();c!=chokepoints.end();c++)
-        {
-          double length=(*c)->getWidth();
-          if (length<min_length || choke==NULL)
-          {
-            min_length=length;
-            choke=*c;
-          }
-        }
-
-        //order the worker to move to the center of the gap
-        (*i)->rightClick(choke->getCenter());
-        break;
-      }
-    }
-  }
-  if (analyzed)
-    drawTerrainData();
-
-  if (analysis_just_finished)
-  {
-    Broodwar->printf("Finished analyzing map.");
-    analysis_just_finished=false;
-  }
-  Position aux;
-  int j = 0;
-  for(std::set<Unit*>::const_iterator i=Broodwar->self()->getUnits().begin();i!=Broodwar->self()->getUnits().end();i++)
-  {
-	  if(!(*i)->getType().isWorker())
-	  {
-		  if(j == 0)
-		  {
-			  aux = (*i)->getPosition();
-		  }
-		  if(j >= 1 && j <= 6)
-		  {
-			  (*i)->move(aux,false);
-		  }
-		  if(j == 6)
-		  {
-			  j = 0;
-		  }
-		j++;
-	  }
-	  if((*i)->getID() == IdExplorador && (*i)->isIdle())
-	  {
-			int x = rand()%(Broodwar->mapWidth()*32);
-			int y = rand()%(Broodwar->mapHeight()*32);
-			Position movimento = Position(x,y);
-			(*i)->move(movimento);
-	  }
-  }
-  if(WhereToAttack != Position(0,0))
-  {
-	  int aux2;
-	  Unit *aux;
-	  for(std::set<Unit*>::const_iterator i=Broodwar->self()->getUnits().begin();i!=Broodwar->self()->getUnits().end();i++)
-	  {
-		  aux2 = 1;
-		  if(!(*i)->getType().isWorker())
-		  {
-			  if(j == 0)
-			  {
-				  aux = (*i);
-			  }
-			  if(j >= 1 && j <= 6)
-			  {
-				  if((*i)->getDistance(aux->getPosition()) < 100)
-				  {
-					  aux2++;
-				  }
-			  }
-			  if(j == 6)
-			  {
-				  j = 0;
-			  }
-			j++;
-		  }
-		  if(aux2 == 6)
-		  {
-			  int k = -1;
-			  for(std::set<Unit*>::const_iterator m=Broodwar->self()->getUnits().begin();i!=Broodwar->self()->getUnits().end();i++)
-			  {
-				  if((*m)->getID() == aux->getID())
-				  {
-					k = 0;
-				  }
-				  if(k == 0 && k <= 6)
-				  {
-					  (*m)->move(WhereToAttack,false);
-				  }
-			  }
-		  }
-	  } 
-  }
-
 }
 
 void PackAndAttack::onSendText(std::string text)
@@ -238,10 +236,10 @@ void PackAndAttack::onSendText(std::string text)
     show_visibility_data=!show_visibility_data;
   } else if (text=="/analyze")
   {
-    if (analyzed == false)
+    if (analyzed2 == false)
     {
       Broodwar->printf("Analyzing map... this may take a minute");
-      CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)AnalyzeThread, NULL, 0, NULL);
+      CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)AnalyzeThread2, NULL, 0, NULL);
     }
   } else
   {
@@ -270,20 +268,14 @@ void PackAndAttack::onNukeDetect(BWAPI::Position target)
 
 void PackAndAttack::onUnitDiscover(BWAPI::Unit* unit)
 {
-  if (!Broodwar->isReplay() && Broodwar->getFrameCount()>1)
-    Broodwar->sendText("A %s [%x] has been discovered at (%d,%d)",unit->getType().getName().c_str(),unit,unit->getPosition().x(),unit->getPosition().y());
   if(Broodwar->self() != unit->getPlayer())
   {
-	  if(unit->getType().isResourceDepot())
+	  if(unit->getType().isBuilding() && !unit->getType().isNeutral() && unit->getPlayer() == Broodwar->enemy())
 	  {
 		  WhereToAttack = unit->getPosition();
 	  }
 	  for(std::set<Unit*>::const_iterator i=Broodwar->self()->getUnits().begin();i!=Broodwar->self()->getUnits().end();i++)
 	  {
-		  if((*i)->getDistance(unit->getPosition()) < 50)
-		  {
-			  (*i)->attack(unit,false);
-		  }
 	  }
   }
 }
@@ -296,8 +288,16 @@ void PackAndAttack::onUnitEvade(BWAPI::Unit* unit)
 
 void PackAndAttack::onUnitShow(BWAPI::Unit* unit)
 {
-  if (!Broodwar->isReplay() && Broodwar->getFrameCount()>1)
-    Broodwar->sendText("A %s [%x] has been spotted at (%d,%d)",unit->getType().getName().c_str(),unit,unit->getPosition().x(),unit->getPosition().y());
+  if(Broodwar->self() != unit->getPlayer())
+  {
+	  if(unit->getType().isBuilding() && !unit->getType().isNeutral() && unit->getPlayer() == Broodwar->enemy())
+	  {
+		  WhereToAttack = unit->getPosition();
+	  }
+	  for(std::set<Unit*>::const_iterator i=Broodwar->self()->getUnits().begin();i!=Broodwar->self()->getUnits().end();i++)
+	  {
+	  }
+  }
 }
 
 void PackAndAttack::onUnitHide(BWAPI::Unit* unit)
@@ -362,22 +362,22 @@ void PackAndAttack::onSaveGame(std::string gameName)
   Broodwar->printf("The game was saved to \"%s\".", gameName.c_str());
 }
 
-DWORD WINAPI AnalyzeThread()
+DWORD WINAPI AnalyzeThread2()
 {
   BWTA::analyze();
 
   //self start location only available if the map has base locations
   if (BWTA::getStartLocation(BWAPI::Broodwar->self())!=NULL)
   {
-    home       = BWTA::getStartLocation(BWAPI::Broodwar->self())->getRegion();
+    home2       = BWTA::getStartLocation(BWAPI::Broodwar->self())->getRegion();
   }
   //enemy start location only available if Complete Map Information is enabled.
   if (BWTA::getStartLocation(BWAPI::Broodwar->enemy())!=NULL)
   {
-    enemy_base = BWTA::getStartLocation(BWAPI::Broodwar->enemy())->getRegion();
+    enemy_base2 = BWTA::getStartLocation(BWAPI::Broodwar->enemy())->getRegion();
   }
-  analyzed   = true;
-  analysis_just_finished = true;
+  analyzed2   = true;
+  analysis_just_finished2 = true;
   return 0;
 }
 

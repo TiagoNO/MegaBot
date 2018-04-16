@@ -5,12 +5,13 @@
 #include "../utils/tinyxml2.h"
 #include "../utils/Logging.h"
 #include "MetaStrategy.h"
+#include "../data/MatchData.h"
 
 using namespace tinyxml2;
 using namespace BWAPI;
 
-EpsilonGreedy::EpsilonGreedy(void) : MetaStrategy() {
-	name = "Epsilon-greedy";
+EpsilonGreedy::EpsilonGreedy(void) : EpsilonGreedyOnce() {
+	name = "Epsilon-greedy (multistage)";
 	srand(time(NULL));
 }
 
@@ -18,204 +19,232 @@ EpsilonGreedy::EpsilonGreedy(void) : MetaStrategy() {
 EpsilonGreedy::~EpsilonGreedy(void) {
 }
 
-/**
- * Performs epsilon-greedy selection of strategy
- */ 
-void EpsilonGreedy::onStart() {
-
-	boost::random::mt19937 gen(static_cast<unsigned int>(std::time(0)));
-    boost::random::uniform_real_distribution<> dist(0.0, 1.0);
-
-	Logging::getInstance()->log(
-        "EpsilonGreedy parameters: alpha=%.2f; epsilon=%.2f.",
-        Configuration::getInstance()->alpha,
-        Configuration::getInstance()->epsilon
-    );
-
-    //float lucky = (rand() % 1000) / 1000.f;
-    double lucky =  dist(gen); //(rand() / (double)(RAND_MAX + 1));
-    double epsilon = Configuration::getInstance()->epsilon; //alias for easy reading
-    if (lucky < epsilon) {
-		Logging::getInstance()->log(
-            "Choosing randomly: (%.3f < %.3f)", lucky, epsilon
-        );
-		name += " - random choice";
-		currentStrategy = randomUniform();
-    }
-    else {
-        Logging::getInstance()->log(
-            "Choosing greedily: (%.3f > %.3f)", lucky, epsilon
-        );
-		name += " - greedy choice";
-
-        //file to read is MegaBot-vs-enemy.xml
-        string inputFile = Configuration::getInstance()->enemyInformationInputFile();
-
-        tinyxml2::XMLDocument doc;
-        XMLError errorInput = doc.LoadFile(inputFile.c_str());
-
-        if (errorInput == XMLError::XML_NO_ERROR) {
-            //BWAPI::Player* enemy = Broodwar->enemy();
-            string enemy_name = Broodwar->enemy()->getName();
-            XMLElement* rootNode = doc.FirstChildElement("scores");
-
-            if (rootNode != NULL) {
-                XMLElement* candidate = rootNode->FirstChildElement();
-                string best_name;
-                float best_score = -1.0f;
-
-                map<string, float> scoresMap;
-				scoresMap[MetaStrategy::NUSBot] = 0;
-                scoresMap[MetaStrategy::SKYNET] = 0;
-                scoresMap[MetaStrategy::XELNAGA] = 0;
-
-                while (candidate != NULL) {
-                    float score = -FLT_MAX;
-                    candidate->QueryFloatText(&score);
-
-                    scoresMap[candidate->Name()] = score;
-                    candidate = candidate->NextSiblingElement();
-                }
-
-                for (std::map<string, float>::iterator it = scoresMap.begin(); it != scoresMap.end(); ++it) {
-                    if (it->second > best_score) {
-                        best_name = it->first;
-                        best_score = it->second;
-                    }
-                }
-
-                if (best_name.empty()) {
-                    Logging::getInstance()->log("Best strategy could not be determined. Choosing randomly");
-					name += " failed. Best score not found";
-					currentStrategy = randomUniform();
-                }
-                else {
-                    currentStrategy = portfolio[best_name];
-                }
-            }
-            else {
-                Logging::getInstance()->log("Enemy information not found, choosing strategy randomly");
-				name += " failed. Enemy info not found";
-                currentStrategy = randomUniform();
-            }
-        }
-        else { //prints error
-            Logging::getInstance()->log(
-                "Error while parsing scores file '%s': '%s'. Choosing randomly.",
-                inputFile.c_str(),
-                doc.ErrorName()
-            );
-			name += " failed. File not found?";
-            currentStrategy = randomUniform();
-        }
-	}
-	Logging::getInstance()->log("%s: onStart() - executed in EpsilonGreedy::onStart", getCurrentStrategyName().c_str());
-	currentStrategy->onStart();
-}
 
 void EpsilonGreedy::onFrame() {
-    return; //does nothing, because epsilon-greedy does not change strategy during the match
+	if (Broodwar->getFrameCount() >= lastFrameChecked + 4286 || Broodwar->getFrameCount() == 0) { // every 3 minutes picks a new behavior
+		Logging::getInstance()->log(
+			"Selecting behavior (in minute %d)", Broodwar->elapsedTime() / 60
+		);
+		chooseNewBehavior(currentStrategy);
+		MatchData::getInstance()->registerMyBehaviorName(getCurrentStrategyName().c_str());
+		MatchData::getInstance()->updateframeCrashFile();
+		Logging::getInstance()->log("Updating Crash File");
+	}
+	if(Broodwar->getFrameCount() == 0)
+	{
+		Logging::getInstance()->log("Checking if there was a crash last game...");
+		discountCrashes();
+	}
+}
 
-	/*
-	int thisFrame = Broodwar->getFrameCount();
-    myBehaviorName = MetaStrategy::getInstance()->getStrategy();
+void EpsilonGreedy::chooseNewBehavior(BWAPI::AIModule* currentStrategy) {
+	using namespace tinyxml2;
 
-    MatchData::getInstance()->registerMyBehaviorName(myBehaviorName);
-    currentBehavior = behaviors[myBehaviorName];
-    currentBehavior->onFrame();
-    logger->log("%s on!", myBehaviorName.c_str());
+	XMLElement* rootNode;
+	XMLElement* myBehvNode;
+	XMLElement* frameNode;
+	XMLElement* queryNode;
 
-    if (Broodwar->elapsedTime() / 60 >= 81) {	//leave stalled game
-        Broodwar->leaveGame();
-        return;
-    }
+	string inputFile = Configuration::getInstance()->enemyInformationInputFile();
+	string outputFile = Configuration::getInstance()->enemyInformationOutputFile();
 
-    currentBehavior->onFrame();
-	
-    //draws some text
-    Broodwar->drawTextScreen(240, 20, "\x0F MegaBot v1.0.2");
-    Broodwar->drawTextScreen(240, 35, "\x0F Strategy: %s", myBehaviorName.c_str());
-    //Broodwar->drawTextScreen(5, 25, "\x0F Enemy behavior: %s", enemyBehaviorName.c_str());
-    Broodwar->drawTextScreen(240, 45, "\x0F Enemy: %s", Broodwar->enemy()->getName().c_str());
-    Broodwar->drawTextScreen(240, 60, "Frame count %d.", thisFrame);
-    Broodwar->drawTextScreen(240, 75, "Seconds: %d.", Broodwar->elapsedTime());
-	*/
+	tinyxml2::XMLDocument doc;
+	XMLError input_result = doc.LoadFile(outputFile.c_str());
+
+	// if file was not found, we create a node and fill information in it
+	if (input_result == XML_ERROR_FILE_NOT_FOUND) {
+		rootNode = doc.NewElement("scores");
+		doc.InsertFirstChild(rootNode);
+	}
+	// if another error occurred, we're in trouble =/
+	else if (input_result != XML_NO_ERROR) {
+		Logging::getInstance()->log(
+			"Error while parsing file '%s'. Won't switch behavior. Error: '%s'",
+			inputFile,
+			doc.ErrorName()
+		);
+		return;
+	}
+	else { //no error, goes after root node
+		rootNode = doc.FirstChildElement("scores");
+		if (rootNode == NULL) {
+			rootNode = doc.NewElement("scores");
+			doc.InsertFirstChild(rootNode);
+		}
+	}
+
+
+	if(Broodwar->getFrameCount() == 0) // if we are in the first frame, we have to choose one of the three main berraviors
+	{
+		frameNode = rootNode->FirstChildElement("frame");
+		if(frameNode == NULL)
+		{
+			frameNode = doc.NewElement("frame");
+			frameNode->SetAttribute("value",0);
+			rootNode->InsertFirstChild(frameNode);
+		}
+		myBehvNode = frameNode->FirstChildElement();
+		if(myBehvNode == NULL)
+		{
+			// selects a strategy at random and initializes its value as (one/zero)
+			map<string, BWAPI::AIModule*>::iterator behv;
+			for(behv = portfolio.begin(); behv != portfolio.end(); behv++)
+			{
+				if((*behv).second != portfolio["Expand"] && (*behv).second != portfolio["Explore"] && (*behv).second != portfolio["PackAndAttack"])
+				{
+					myBehvNode = doc.NewElement((*behv).first.c_str()); 
+					myBehvNode->SetText(0);
+					frameNode->InsertFirstChild(myBehvNode);
+				}
+			}
+		//	currentStrategy = randomUniformBegin();
+		}
+	}
+	else // if we are in the middle of the game, we have to see what is the best choise for this moment of the game
+	{
+		frameNode = rootNode->FirstChildElement("frame");
+		while(frameNode != NULL)
+		{
+			if(frameNode->IntAttribute("value") == Broodwar->getFrameCount())
+			{
+				Logging::getInstance()->log("Found scores at frame %d", frameNode->IntAttribute("value"));
+				break;
+			}
+			frameNode = frameNode->NextSiblingElement("frame");
+		}
+		if(frameNode == NULL) // if it is the first time we reached that frame against this enemy
+		{
+			frameNode = doc.NewElement("frame");
+			frameNode->SetAttribute("value",Broodwar->getFrameCount());
+			rootNode->InsertEndChild(frameNode);
+		}
+		myBehvNode = frameNode->FirstChildElement();
+		if(myBehvNode == NULL) // if there was an error in some point while writing things in the file, we can still fix it!
+		{
+			// selects a strategy at random and initializes its value as (one/zero)
+			map<string, BWAPI::AIModule*>::iterator behv;
+			for(behv = portfolio.begin(); behv != portfolio.end(); behv++)
+			{
+				myBehvNode = doc.NewElement((*behv).first.c_str()); 
+				myBehvNode->SetText(0);
+				frameNode->InsertFirstChild(myBehvNode);
+			}
+			forceStrategy("random");
+		}
+		else // if there was no error and the berraviors were written, lets decide our next move!
+		{				
+			// frame node has children, select amongst the highest scores
+			boost::random::mt19937 gen(static_cast<unsigned int>(std::time(0)));
+			boost::random::uniform_real_distribution<> dist(0.0, 1.0);
+			double lucky =  dist(gen); //(rand() / (double)(RAND_MAX + 1));
+			double epsilon = Configuration::getInstance()->epsilon; //alias for easy reading
+			if(lucky < epsilon) {
+				forceStrategy("random");
+				Logging::getInstance()->log("random choise (%f < %f)!",lucky,epsilon);
+			}
+			else
+			{
+				float bigger = -1.0f;
+				string BotName;
+				float score;
+				while (myBehvNode != NULL) 
+				{
+					myBehvNode->QueryFloatText(&score);
+					Logging::getInstance()->log("Max behavior value %f(%s) and actual behavior value %f(%s)",bigger,BotName.c_str(),score,myBehvNode->Name());
+					if (bigger <= score) 
+					{
+						bigger = score;
+						BotName = myBehvNode->Name();
+					}
+					myBehvNode = myBehvNode->NextSiblingElement();
+				}
+				if(BotName.empty())
+				{
+					forceStrategy("random");
+				}
+				else
+				{
+					if(BotName != "Expand" && BotName != "Explore" && BotName != "PackAndAttack" && BotName != strategyNames[currentStrategy])
+					{
+						forceStrategy(strategyNames[currentStrategy]);
+					}
+					else
+					{
+						forceStrategy(BotName);
+					}
+				}
+			}
+		}
+	}
+	lastFrameChecked = Broodwar->getFrameCount();
+	doc.SaveFile(outputFile.c_str());
+	doc.SaveFile(inputFile.c_str());
 }
 
 void EpsilonGreedy::discountCrashes() {
-    using namespace tinyxml2;
+	using namespace tinyxml2;
 
-    //file to read is MegaBot-vs-enemy.xml
-    string inputFile = Configuration::getInstance()->enemyInformationInputFile();
-    string outputFile = Configuration::getInstance()->enemyInformationOutputFile();
-    string crashFile = Configuration::getInstance()->crashInformationInputFile();
+	//file to read is MegaBot-vs-enemy.xml
+	string inputFile = Configuration::getInstance()->enemyInformationInputFile();
+	string outputFile = Configuration::getInstance()->enemyInformationOutputFile();
+	string crashedBehaviorName = MatchData::getInstance()->getCrashedBehaviorName();
+	int frameThatCrashed = MatchData::getInstance()->getFrameThatCrashed();
+	Logging::getInstance()->log("Trying to find behavior %s in frame %i",crashedBehaviorName.c_str(),frameThatCrashed);
+	
+	if(crashedBehaviorName != "empty" && frameThatCrashed != -1) // if the last game crashed
+	{
+		Logging::getInstance()->log("Discounting behavior %s because it crashed last game in the frame %i",crashedBehaviorName.c_str(),frameThatCrashed);
+		tinyxml2::XMLDocument doc;
+		XMLError inputError = doc.LoadFile(outputFile.c_str());
+		if(inputError == XML_NO_ERROR)
+		{
+			XMLElement *rootNode;
+			XMLElement *frameNode;
+			XMLElement *myBehvNode;
+			// if file was not found, we create a node and fill information in it
+			if (inputError == XML_ERROR_FILE_NOT_FOUND) {
+				rootNode = doc.NewElement("scores");
+				doc.InsertFirstChild(rootNode);
+			}
+			// if another error occurred, we're in trouble =/
+			else if (inputError != XML_NO_ERROR) {
+				Logging::getInstance()->log("Error while parsing file '%s'. Won't switch behavior. Error: '%s'",inputFile,doc.ErrorName());
+				return;
+			}
+			else { //no error, goes after root node
+				rootNode = doc.FirstChildElement("scores");
+				if (rootNode == NULL) {
+					rootNode = doc.NewElement("scores");
+					doc.InsertFirstChild(rootNode);
+				}
+			}
 
-    tinyxml2::XMLDocument doc;
-    XMLError errorInputCrash = doc.LoadFile(crashFile.c_str());
-
-    tinyxml2::XMLDocument doc2;
-    XMLError errorInput = doc2.LoadFile(inputFile.c_str());
-
-    if (errorInputCrash == XMLError::XML_NO_ERROR) {
-        XMLElement* rootNode = doc.FirstChildElement("crashes");
-        if (rootNode != NULL) {
-            XMLElement* behavior = rootNode->FirstChildElement();
-
-            map<string, float> crashesMap;
-            crashesMap[MetaStrategy::NUSBot] = 0;
-            crashesMap[MetaStrategy::SKYNET] = 0;
-            crashesMap[MetaStrategy::XELNAGA] = 0;
-
-            while (behavior != NULL) {
-                float score = -FLT_MAX;
-                behavior->QueryFloatText(&score);
-                crashesMap[behavior->Name()] = score;
-                behavior = behavior->NextSiblingElement();
-            }
-
-            if (errorInput == XMLError::XML_NO_ERROR) {
-                XMLElement* inputRootNode = doc2.FirstChildElement("scores");
-
-                if (inputRootNode != NULL) {
-                    XMLElement* input_behavior = inputRootNode->FirstChildElement();
-
-                    map<string, float> scoresMap;
-                    scoresMap[MetaStrategy::NUSBot] = 0;
-                    scoresMap[MetaStrategy::SKYNET] = 0;
-                    scoresMap[MetaStrategy::XELNAGA] = 0;
-
-                    while (input_behavior != NULL) {
-                        float score = -FLT_MAX;
-                        float alpha = Configuration::getInstance()->alpha;
-
-                        input_behavior->QueryFloatText(&score);
-                        if (score > 0 && input_behavior == behavior) {
-                            for (int i = crashesMap[input_behavior->Name()]; i > 0; i--)
-                                score = (1 - alpha)*score + alpha * (-1);
-
-                        }
-                        scoresMap[input_behavior->Name()] = score;
-                        input_behavior->SetText(score);
-                        input_behavior = input_behavior->NextSiblingElement();
-                    }
-                }
-                doc2.SaveFile(outputFile.c_str());
-            }
-            else { //prints error
-				Logging::getInstance()->log(
-                    "Error while parsing input file '%s'. Error: '%s'",
-                    Configuration::getInstance()->enemyInformationInputFile().c_str(),
-                    doc2.ErrorName()
-                );
-            }
-        }
-    }
-    else { //prints error
-        Logging::getInstance()->log(
-            "Error while parsing crash file '%s'. Error: '%s'",
-            Configuration::getInstance()->crashInformationInputFile().c_str(),
-            doc.ErrorName()
-        );
-    }
+			frameNode = rootNode->FirstChildElement("frame");
+			while(frameNode != NULL)
+			{
+				if(frameNode->IntAttribute("value") == frameThatCrashed)
+				{
+					break;
+				}
+				frameNode = frameNode->NextSiblingElement("frame");
+			}
+			if(frameNode != NULL)
+			{
+				myBehvNode = frameNode->FirstChildElement(crashedBehaviorName.c_str());
+				if(myBehvNode != NULL)
+				{
+				    float alpha = Configuration::getInstance()->alpha; //alias for easy reading
+					float oldScore;
+					int result_value = -1;
+					float score;
+					myBehvNode->QueryFloatText(&score);
+					score = (1 - alpha)*oldScore + alpha*result_value;
+					myBehvNode->SetText(score);
+				}
+			}
+		}
+		doc.SaveFile(outputFile.c_str());
+		doc.SaveFile(inputFile.c_str());
+	}
 }
 

@@ -37,7 +37,7 @@ Configuration::Configuration() {
     //readDataFile = READ_DIR + "output.xml";
     strategyFile = INPUT_DIR + "megabot_protoss-uniform.xml";
 
-	enemyInformationPrefix = "q_MegaBot-vs-";
+	enemyInformationPrefix = "MegaBot-vs-";
     crashInformationPrefix = "crash_MegaBot-vs-";
 
 	metaStrategyID = "epsilon-greedy"; 
@@ -158,7 +158,6 @@ void Configuration::parseConfig() {
 		Broodwar->printf("reading epsilon!");
 		element->QueryFloatAttribute("value", &epsilon);
 	}
-
 	//traverses the XML looking for configurations
 	/*
 	for (XMLNode* data = doc.FirstChild()->FirstChild(); data; data = data->NextSibling()) {

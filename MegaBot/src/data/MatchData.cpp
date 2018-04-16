@@ -19,7 +19,6 @@ MatchData::MatchData() : metaStrategyName("unknown") {
 	logger = Logging::getInstance();
 }
 
-
 MatchData::~MatchData() {}
 
 void MatchData::registerMatchBegin() {
@@ -27,7 +26,6 @@ void MatchData::registerMatchBegin() {
 	logger->log("Match started at: %s", startTime.c_str());
 	logger->log("Map is: %s", Broodwar->mapFileName().c_str());
 	logger->log("Enemy is: %s", Broodwar->enemy()->getName().c_str() );
-
 }
 
 void MatchData::registerMatchFinish(int result) {
@@ -59,6 +57,22 @@ void MatchData::registerEnemyBehaviorName(string name) {
     enemyBehaviorName = name;
 }
 
+void MatchData::registerCrashBehaviorName(string name){
+	crashedBehaviorName = name;
+}
+
+void MatchData::registerFrameThatCrashed(int frame){
+	frameThatCrashed = frame;
+}
+
+int MatchData::getFrameThatCrashed(){
+	return frameThatCrashed;
+}
+
+string MatchData::getCrashedBehaviorName(){
+	return crashedBehaviorName;
+}
+
 bool isSpace(char caracter) {
     if (caracter == ' ')
         return true;
@@ -78,6 +92,7 @@ void MatchData::writeDetailedResult() {
 
     XMLElement* rootNode;
     XMLElement* myBehvNode;
+	XMLElement* frameNode;
     XMLElement* queryNode;
 
     string inputFile = Configuration::getInstance()->enemyInformationInputFile();
@@ -86,10 +101,10 @@ void MatchData::writeDetailedResult() {
     //const char* filename = Configuration::getInstance()->readDataFile.c_str();
 
     tinyxml2::XMLDocument doc;
-    XMLError input_result = doc.LoadFile(inputFile.c_str());
+	XMLError input_result = doc.LoadFile(outputFile.c_str());
 
     // if file was not found, ok, we create a node and fill information in it
-    if (input_result == XML_ERROR_FILE_NOT_FOUND) {
+	if (input_result == XML_ERROR_FILE_NOT_FOUND) {
         rootNode = doc.NewElement("scores");
         doc.InsertFirstChild(rootNode);
     }
@@ -117,12 +132,6 @@ void MatchData::writeDetailedResult() {
         }
     }
 
-    //finds information with bot node
-    /*botNode = doc.FirstChildElement("results")->FirstChildElement(enemy_name.c_str());
-    if (botNode == NULL) {
-    botNode = doc.NewElement(enemy_name.c_str());
-    doc.InsertFirstChild(botNode);
-    }*/
 
     int result_value = 0;
     //queries wins, losses or draws node according to match result
@@ -140,25 +149,46 @@ void MatchData::writeDetailedResult() {
         throw exception("Invalid game result!");
     }
 
-    float oldScore;
+    float oldScore = 0;
     float score = 0;
     float alpha = Configuration::getInstance()->alpha; //alias for easy reading
 
+	frameNode = rootNode->FirstChildElement();
+	while(frameNode != NULL)
+	{
+		if(frameNode->IntAttribute("value") >= Broodwar->getFrameCount() - 4286 && frameNode->IntAttribute("value") <= Broodwar->getFrameCount() + 4286) 
+		{
+			break;
+		}
+		frameNode = frameNode->NextSiblingElement();
+	}
+	if(frameNode == NULL)
+	{
+		frameNode = doc.NewElement("frame");
+		frameNode->SetAttribute("value",Broodwar->getFrameCount());
+		rootNode->InsertEndChild(frameNode);
+	}
 
-    myBehvNode = rootNode->FirstChildElement(myBehaviorName.c_str());
-    if (myBehvNode == NULL) {
-        score = alpha*result_value;
-        myBehvNode = doc.NewElement(myBehaviorName.c_str());
-        myBehvNode->SetText(score);
-        rootNode->InsertFirstChild(myBehvNode);
-    }
-    else {
-        myBehvNode->QueryFloatText(&oldScore);
-        score = (1 - alpha)*oldScore + alpha*result_value;
-        myBehvNode->SetText(score);
-    }
-
+	myBehvNode = frameNode->FirstChildElement(myBehaviorName.c_str());
+	if (myBehvNode == NULL) 
+	{
+		score = alpha*result_value;
+		myBehvNode = doc.NewElement(myBehaviorName.c_str());
+		myBehvNode->SetText(score);
+		frameNode->InsertFirstChild(myBehvNode);
+		Logging::getInstance()->log("Behavior not found, so its value is now %f at frame %i",score,frameNode->IntAttribute("value"));
+	}
+	else 
+	{
+		 int frame;
+		 myBehvNode->QueryFloatText(&oldScore);
+		 score = (1 - alpha)*oldScore + alpha*result_value;
+		 frameNode->QueryIntAttribute("value",&frame);
+		 Logging::getInstance()->log("Last score was %f(%s) and now it its %f(R = %f) at frame %i",oldScore,myBehaviorName.c_str(),score,result_value,frame);
+		 myBehvNode->SetText(score);
+	}
     doc.SaveFile(outputFile.c_str());
+	doc.SaveFile(inputFile.c_str());
 }
 
 MatchData* MatchData::getInstance() {
@@ -259,13 +289,16 @@ void MatchData::writeToCrashFile() {
 
     XMLElement* rootNode;
     XMLElement* myBehvNode;
+	XMLElement* frameNode;
     XMLElement* queryNode;
 
     string inputFile = Configuration::getInstance()->crashInformationInputFile();
     string outputFile = Configuration::getInstance()->crashInformationOutputFile();
+	crashedBehaviorName = "empty";
+	frameThatCrashed = -1;
 
     tinyxml2::XMLDocument doc;
-    XMLError input_result = doc.LoadFile(inputFile.c_str());
+    XMLError input_result = doc.LoadFile(outputFile.c_str());
 
     // if file was not found, ok, we create a node and fill information in it
     if (input_result == XML_ERROR_FILE_NOT_FOUND) {
@@ -274,11 +307,77 @@ void MatchData::writeToCrashFile() {
     }
     // if another error occurred, we're in trouble =/
     else if (input_result != XML_NO_ERROR) {
-		logger->log(
-            "Error while parsing the crash file '%s'. Error: '%s'",
-            inputFile,
-            doc.ErrorName()
-        );
+			logger->log("Error while parsing the crash file '%s'. Error: '%s'",inputFile,doc.ErrorName());
+        return;
+    }
+    else { //no error, goes after root node
+        rootNode = doc.FirstChildElement("crashes");
+        if (rootNode == NULL) {
+            rootNode = doc.NewElement("crashes");
+            doc.InsertFirstChild(rootNode);
+        }
+    }
+	
+	int score;
+	int count;
+	frameNode = rootNode->FirstChildElement("frame");
+	while(frameNode != NULL)
+	{
+		count = 0;
+		myBehvNode = frameNode->FirstChildElement();
+		while(myBehvNode != NULL)
+		{
+			myBehvNode->QueryIntText(&score);
+			if(score == 1) // if the bot selected this behavior last game
+			{
+				frameThatCrashed = frameNode->IntAttribute("value");
+				crashedBehaviorName = myBehvNode->Name();
+				logger->log("Behv %s selected last game in frame %i",crashedBehaviorName.c_str(),frameThatCrashed);
+				break;
+			}
+			else if(score == 0)
+			{
+				logger->log("Behv %s was not selected last game in frame %i",myBehvNode->Name(),frameNode->IntAttribute("value"));
+				count++; // if this berravior didn´t crashed
+			}
+			myBehvNode = myBehvNode->NextSiblingElement();
+		}
+		if(count >= 5)
+		{
+			break;
+		}
+		frameNode = frameNode->NextSiblingElement("frame");
+	}
+	Logging::getInstance()->log("%s crashed last game in the frame %i",crashedBehaviorName.c_str(),frameThatCrashed);
+	doc.SaveFile(inputFile.c_str());
+    doc.SaveFile(outputFile.c_str());
+}
+
+void MatchData::updateframeCrashFile()
+{
+    using namespace tinyxml2;
+
+    string bot_name = myBehaviorName;
+
+    XMLElement* rootNode;
+    XMLElement* myBehvNode;
+	XMLElement* frameNode;
+    XMLElement* queryNode;
+
+    string inputFile = Configuration::getInstance()->crashInformationInputFile();
+    string outputFile = Configuration::getInstance()->crashInformationOutputFile();
+
+    tinyxml2::XMLDocument doc;
+    XMLError input_result = doc.LoadFile(outputFile.c_str());
+
+    // if file was not found, ok, we create a node and fill information in it
+    if (input_result == XML_ERROR_FILE_NOT_FOUND) {
+        rootNode = doc.NewElement("crashes");
+        doc.InsertFirstChild(rootNode);
+    }
+    // if another error occurred, we're in trouble =/
+    else if (input_result != XML_NO_ERROR) {
+		logger->log("Error while parsing the crash file '%s'. Error: '%s'",inputFile,doc.ErrorName());
         return;
     }
     else { //no error, goes after root node
@@ -289,20 +388,38 @@ void MatchData::writeToCrashFile() {
         }
     }
 
-    float oldScore;
-
-    myBehvNode = rootNode->FirstChildElement(myBehaviorName.c_str());
-    if (myBehvNode == NULL) {
-        myBehvNode = doc.NewElement(myBehaviorName.c_str());
-        myBehvNode->SetText(0);
-        rootNode->InsertFirstChild(myBehvNode);
-    }
-    else {
-        myBehvNode->QueryFloatText(&oldScore);
-        myBehvNode->SetText(oldScore + 1);
-    }
-
-    doc.SaveFile(outputFile.c_str());
+	frameNode = rootNode->FirstChildElement("frame");
+	while(frameNode != NULL)
+	{
+		if(frameNode->IntAttribute("value") == Broodwar->getFrameCount())
+		{
+			logger->log("Found the frameNode with the value %i in the frame %i",frameNode->IntAttribute("value"),Broodwar->getFrameCount());
+			break;
+		}
+		frameNode = frameNode->NextSiblingElement("frame");	
+	}
+	if(frameNode == NULL)
+	{
+		logger->log("Did not found frameNode in the frame %i",Broodwar->getFrameCount());
+		frameNode = doc.NewElement("frame");
+		frameNode->SetAttribute("value",Broodwar->getFrameCount());
+		rootNode->InsertEndChild(frameNode);
+	}
+	myBehvNode = frameNode->FirstChildElement(myBehaviorName.c_str());
+	if(myBehvNode == NULL)
+	{
+		logger->log("Did not found behvNode in the frame %i",Broodwar->getFrameCount());
+		myBehvNode = doc.NewElement(myBehaviorName.c_str());
+		myBehvNode->SetText(1);
+		frameNode->InsertFirstChild(myBehvNode);
+	}
+	else
+	{
+		logger->log("Found behvNode %s in the frame %i",myBehvNode->Name(),Broodwar->getFrameCount());
+		myBehvNode->SetText(1);
+	}
+	doc.SaveFile(inputFile.c_str());
+	doc.SaveFile(outputFile.c_str());
 }
 
 void MatchData::updateCrashFile() {
@@ -311,8 +428,10 @@ void MatchData::updateCrashFile() {
     string bot_name = myBehaviorName;
 
     XMLElement* rootNode;
+	XMLElement* frameNode;
     XMLElement* myBehvNode;
 
+	string inputFile = Configuration::getInstance()->crashInformationInputFile();
     string outputFile = Configuration::getInstance()->crashInformationOutputFile();
 
     tinyxml2::XMLDocument doc;
@@ -330,11 +449,23 @@ void MatchData::updateCrashFile() {
     else { //no error, goes after root node
         rootNode = doc.FirstChildElement("crashes");
         if (rootNode != NULL) {
-            myBehvNode = rootNode->FirstChildElement(myBehaviorName.c_str());
-            if (myBehvNode != NULL) {
-                myBehvNode->SetText(0);
-            }
-            doc.SaveFile(outputFile.c_str());
+			frameNode = rootNode->FirstChildElement("frame");
+//			Logging::getInstance()->log("{{{{{1}}}}}");
+			while(frameNode != NULL)
+			{
+	//			Logging::getInstance()->log("{{{{{2}}}}}");
+				int score;
+				myBehvNode = frameNode->FirstChildElement();
+				while(myBehvNode != NULL)
+				{
+					myBehvNode->SetText(0);
+					myBehvNode = myBehvNode->NextSiblingElement();
+				}
+				frameNode = frameNode->NextSiblingElement("frame");
+			}
         }
-    }
+			Logging::getInstance()->log("Crash was discounted");
+			doc.SaveFile(outputFile.c_str());
+			doc.SaveFile(inputFile.c_str());
+        }
 }

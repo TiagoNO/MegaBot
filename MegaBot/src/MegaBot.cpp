@@ -7,9 +7,10 @@
 #include "MegaBot.h"
 #include "Explore.h"
 #include "Xelnaga.h"
+#include "PackAndAttack.h"
+#include "Expand.h"
 #include "Skynet.h"
 #include "NUSBotModule.h"
-#include "UnitInfoManager.h"
 #include "strategy/MetaStrategy.h"
 #include "strategy/MetaStrategyManager.h"
 #include "data/Configuration.h"
@@ -27,7 +28,6 @@ MegaBot::MegaBot() : acknowledged(false) {
 	logger = Logging::getInstance();
 
     //Configuration::getInstance()->parseConfig(); (moved to onStart)
-
     MatchData::getInstance()->registerEnemyBehaviorName("Unknown");
     enemyBehaviorName = "Unknown";
 
@@ -37,30 +37,24 @@ MegaBot::MegaBot() : acknowledged(false) {
 void MegaBot::onStart() {
     // Uncomment to enable complete map information
     //Broodwar->enableFlag(Flag::CompleteMapInformation);
-
-    MatchData::getInstance()->registerMatchBegin();
-    Configuration::getInstance()->parseConfig();
-
-	// initializes UnitInfoManager
-	scutil::UnitInfoManager::getInstance();
+    MatchData::getInstance()->registerMatchBegin(); // registra o inicio da partida
+    Configuration::getInstance()->parseConfig();  // pega os registros de configuração do megabot no arquivo xml
 
 	//initializes and registers meta strategy (strategy selector)
-	metaStrategy = MetaStrategyManager::getMetaStrategy();
-	MatchData::getInstance()->registerMetaStrategy(metaStrategy->getName());
-	metaStrategy->onStart();
-
+	metaStrategy = MetaStrategyManager::getMetaStrategy(); // recebe qual o tipo de estratégia utilizará, como e-greedy
+	MatchData::getInstance()->registerMetaStrategy(metaStrategy->getName()); // reistra o tipo de estratégia que utilizará
+	metaStrategy->onStart();  // chama o onStart() de todos os comportamentos registrados no megabot
 	//retrieves strategy to begin match
-	currentStrategy = metaStrategy->getCurrentStrategy();
-
+	currentStrategy = metaStrategy->getCurrentStrategy(); // 
+	//currentStrategy = metaStrategy->randomUniformBegin;
     //Broodwar->sendText("%s on!", myBehaviorName.c_str());		//sends behavior communication message
 	logger->log("Game started with %s !", metaStrategy->getCurrentStrategyName().c_str());
-
+	Configuration::getInstance()->firstBerraviorChoise = metaStrategy->getCurrentStrategyName().c_str();
+	Broodwar->sendText("Game started with %s !", metaStrategy->getCurrentStrategyName().c_str());
     MatchData::getInstance()->registerMyBehaviorName(metaStrategy->getCurrentStrategyName());
+
 	
-    //currentBehavior->onStart();
-
-    MatchData::getInstance()->writeToCrashFile();
-
+	MatchData::getInstance()->writeToCrashFile();
 	//initializes game state manager
 	GameStateManager::getInstance();
 
@@ -107,15 +101,17 @@ void MegaBot::onEnd(bool isWinner) {
     MatchData::getInstance()->writeDetailedResult();
     MatchData::getInstance()->updateCrashFile();	//TODO: valid only for epsilon-greedy!
 
+
 	currentStrategy->onEnd(isWinner);
 	logger->log("Finished.");
 }
 
 void MegaBot::onFrame() {
 
-	if(Broodwar->getFrameCount() == 0){
+	if (Broodwar->getFrameCount() == 0) {
 		logger->log("BEGIN: first onFrame.");
 	}
+	
 	//just prints 'Alive...' so that we know things are ok
 	if (Broodwar->getFrameCount() % 100 == 0) {
 		Logging::getInstance()->log("Alive...");
@@ -126,8 +122,6 @@ void MegaBot::onFrame() {
 		Broodwar->leaveGame();
         return;
     }
-
-	scutil::UnitInfoManager::getInstance().onFrame();
 
 	if(Broodwar->getFrameCount() == 0){ logger->log("first metaStrategy->onFrame()"); }
 	metaStrategy->onFrame();	//might switch strategy so I update currentStrategy below
@@ -179,29 +173,24 @@ void MegaBot::onNukeDetect(BWAPI::Position target) {
 }
 
 void MegaBot::onUnitDiscover(BWAPI::Unit* unit) {
-	scutil::UnitInfoManager::getInstance().onUnitDiscover(unit);
 	GameState::onUnitDiscover(unit);
     currentStrategy->onUnitDiscover(unit);
 }
 
 void MegaBot::onUnitEvade(BWAPI::Unit* unit) {
-	scutil::UnitInfoManager::getInstance().onUnitEvade(unit);
     currentStrategy->onUnitEvade(unit);
 }
 
 void MegaBot::onUnitShow(BWAPI::Unit* unit) {
-	scutil::UnitInfoManager::getInstance().onUnitShow(unit);
 	GameState::onUnitShow(unit);
     currentStrategy->onUnitShow(unit);
 }
 
 void MegaBot::onUnitHide(BWAPI::Unit* unit) {
-	scutil::UnitInfoManager::getInstance().onUnitHide(unit);
     currentStrategy->onUnitHide(unit);
 }
 
 void MegaBot::onUnitCreate(BWAPI::Unit* unit) {
-	scutil::UnitInfoManager::getInstance().onUnitCreate(unit);
 	GameState::onUnitCreate(unit);
     currentStrategy->onUnitCreate(unit);
 }
@@ -215,8 +204,6 @@ void MegaBot::onUnitDestroy(BWAPI::Unit* unit) {
 		unit->getPlayer()->getName().c_str()
 	);
 
-	scutil::UnitInfoManager::getInstance().onUnitDestroy(unit);
-
 	if (unit->getPlayer()->getID() == Broodwar->enemy()->getID())	{
 		GameState::onUnitDestroy(unit);
 	}
@@ -225,12 +212,10 @@ void MegaBot::onUnitDestroy(BWAPI::Unit* unit) {
 }
 
 void MegaBot::onUnitMorph(BWAPI::Unit* unit) {
-	scutil::UnitInfoManager::getInstance().onUnitMorph(unit);
     currentStrategy->onUnitMorph(unit);
 }
 
 void MegaBot::onUnitRenegade(BWAPI::Unit* unit) {
-	scutil::UnitInfoManager::getInstance().onUnitRenegade(unit);
     currentStrategy->onUnitRenegade(unit);
 }
 
@@ -239,10 +224,18 @@ void MegaBot::onSaveGame(std::string gameName) {
 }
 
 void MegaBot::onUnitComplete(BWAPI::Unit *unit) {
-	scutil::UnitInfoManager::getInstance().onUnitComplete(unit);
     currentStrategy->onUnitComplete(unit);
 }
 
+/*
+string MegaBot::myBehavior() {
+    return myBehaviorName;
+}
+
+string MegaBot::enemyBehavior() {
+    return enemyBehaviorName;
+}
+*/
 void MegaBot::handshake(string text){
 	//behavior message recognition: checks whether text ends with 'on!'
     if (enemyBehaviorName == "Unknown" && text.substr(max(3, int(text.size())) - 3) == string("on!")) {

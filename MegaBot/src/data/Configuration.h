@@ -25,6 +25,9 @@ public:
 	/** path to write the file with match details */
 	string matchDataFile;
 
+	// first choise on the match
+	string firstBerraviorChoise;
+
 	/** beginning of file name to look for information about enemy */
     string enemyInformationPrefix;
 

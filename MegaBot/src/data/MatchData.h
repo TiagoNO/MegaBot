@@ -18,6 +18,9 @@ class MatchData {
 
 	//stores enemy behavior used in this match
 	string enemyBehaviorName;
+
+	//stores the behavior that crashed last game
+	string crashedBehaviorName;
 	
 	//start and finishing timestamps, stored as strings
 	string startTime, endTime; 
@@ -27,6 +30,8 @@ class MatchData {
 
 	// game duration in frames
 	int frameCount;
+
+	int frameThatCrashed;
 
 	// game duration in seconds, according to BWAPI
 	int duration;
@@ -38,6 +43,8 @@ class MatchData {
 	int enemyUnitScore, enemyKillScore, enemyBuildingScore, enemyRazingScore, enemyGatheredMinerals, enemyGatheredGas, enemyTotal;
 
 	int gameResult;
+
+	int lastFrameState;
 	
 	MatchData();
 
@@ -54,7 +61,6 @@ public:
 	/** Returns the path to the output file containing the summary of matches*/
 	string getSummaryFilename();
 
-
 	/** 
 	 * Registers match result, end time and score data
 	 */
@@ -63,14 +69,26 @@ public:
 	/** Registers the chosen meta strategy */
 	void registerMetaStrategy(string name);
 
+	void registerCrashBehaviorName(string name);
+
+	void registerFrameThatCrashed(int frame);
+
 	/** Returns the name of the registered meta strategy */
 	string getMetaStrategyName();
+
+	// gets the crashed Behavior name
+	string getCrashedBehaviorName();
 
 	// registers my behavior used in this match
 	void registerMyBehaviorName(string name);
 
 	// registers enemy behavior used in this match
 	void registerEnemyBehaviorName(string name);
+
+	// return in what frame the last game crashed
+	int MatchData::getFrameThatCrashed();
+
+	void updateframeCrashFile();
 
 	/* Writes match result in a file */
 	void writeDetailedResult();

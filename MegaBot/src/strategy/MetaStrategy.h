@@ -5,6 +5,9 @@
 #include "../utils/Logging.h"
 #include "Xelnaga.h"
 #include "Skynet.h"
+#include "PackAndAttack.h"
+#include "Explore.h"
+#include "Expand.h"
 #include "NUSBotModule.h"
 
 using namespace BWAPI;
@@ -28,6 +31,10 @@ protected:
 	/** Name of this meta strategy */
 	string name;
 
+	int lastFrameChecked;
+
+	bool changedBehavior;
+
 	/** Maps behaviors to their respective names */
     std::map<BWAPI::AIModule*, string> strategyNames;
 
@@ -49,6 +56,7 @@ public:
 
 	static const string EXPLORE;	//"Explore"
 	static const string EXPAND;		//"Expand"
+	static const string PACKANDATTACK; //"PackAndAttack"
 
 	/** Returns the meta strategy name */
 	string getName();
@@ -56,8 +64,16 @@ public:
 	/** Returns the active strategy */
     BWAPI::AIModule* getCurrentStrategy();
 
+	AIModule* MetaStrategy::randomUniformBegin();
+
+	int getLastFrameNode();
+
 	/** Returns active behavior name */
 	string getCurrentStrategyName();
+
+	bool BehaviorChanged();
+
+	void MetaStrategy::print();
 
 	/** Acts every frame (may switch strategy or not) */
 	virtual void onFrame() {}
