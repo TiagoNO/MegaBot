@@ -183,9 +183,6 @@ AIModule* MetaStrategy::randomUniformBegin() {
 	else if(index == 2)	{
 		return portfolio["Xelnaga"];
 	}
-	else {
-		return portfolio["NUSBot"];
-	}
 }
 
 /*

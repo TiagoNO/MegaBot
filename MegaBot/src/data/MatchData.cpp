@@ -132,12 +132,6 @@ void MatchData::writeDetailedResult() {
         }
     }
 
-    //finds information with bot node
-    /*botNode = doc.FirstChildElement("results")->FirstChildElement(enemy_name.c_str());
-    if (botNode == NULL) {
-    botNode = doc.NewElement(enemy_name.c_str());
-    doc.InsertFirstChild(botNode);
-    }*/
 
     int result_value = 0;
     //queries wins, losses or draws node according to match result
@@ -158,18 +152,22 @@ void MatchData::writeDetailedResult() {
     float oldScore = 0;
     float score = 0;
     float alpha = Configuration::getInstance()->alpha; //alias for easy reading
-	frameNode = NULL;
-	if(Broodwar->getFrameCount() - 4286 <= rootNode->LastChildElement("frame")->IntAttribute("value"))
+
+	frameNode = rootNode->FirstChildElement();
+	while(frameNode != NULL)
 	{
-		frameNode = rootNode->LastChildElement("frame");
+		if(frameNode->IntAttribute("value") >= Broodwar->getFrameCount() - 4286 && frameNode->IntAttribute("value") <= Broodwar->getFrameCount() + 4286) 
+		{
+			break;
+		}
+		frameNode = frameNode->NextSiblingElement();
 	}
-	else if(frameNode == NULL)
+	if(frameNode == NULL)
 	{
 		frameNode = doc.NewElement("frame");
 		frameNode->SetAttribute("value",Broodwar->getFrameCount());
 		rootNode->InsertEndChild(frameNode);
 	}
-
 
 	myBehvNode = frameNode->FirstChildElement(myBehaviorName.c_str());
 	if (myBehvNode == NULL) 
@@ -178,7 +176,7 @@ void MatchData::writeDetailedResult() {
 		myBehvNode = doc.NewElement(myBehaviorName.c_str());
 		myBehvNode->SetText(score);
 		frameNode->InsertFirstChild(myBehvNode);
-		Logging::getInstance()->log("Behavior not found, so its value is now %i at frame %i",score,frameNode->IntAttribute("value"));
+		Logging::getInstance()->log("Behavior not found, so its value is now %f at frame %i",score,frameNode->IntAttribute("value"));
 	}
 	else 
 	{
