@@ -7,6 +7,11 @@ using namespace BWAPI;
 #define cyber 1
 #define gate 2
 
+typedef struct Group{
+	std::set<Unit> UnitsInGroup;
+	struct Group *nextGroup;
+}GroupType;
+
 typedef struct BuildCell2{
 	TilePosition BuildTilePosition;
 	UnitType building;
@@ -159,7 +164,7 @@ Position WhereToAttack; // position to attack the enemy
 Position reunite; // the position to reunite the army
 std::set<BWTA::Chokepoint*> chokepoints; // the chokepoints
 std::set<Position>reunitePoints; //the vector of reunited positions
-int i;
+GroupType *Troops;
 
 
 void PackAndAttack::onStart()
@@ -213,84 +218,6 @@ void PackAndAttack::onEnd(bool isWinner)
 
 void PackAndAttack::onFrame()
 {
-  if (show_visibility_data)
-    drawVisibilityData();
-
-  if (show_bullets)
-    drawBullets();
-
-  if (Broodwar->isReplay())
-    return;
-
-  drawStats();
-  if (analyzed2 && Broodwar->getFrameCount()%30==0)
-  {
-    //order one of our workers to guard our chokepoint.
-    for(std::set<Unit*>::const_iterator i=Broodwar->self()->getUnits().begin();i!=Broodwar->self()->getUnits().end();i++)
-    {
-      if ((*i)->getType().isWorker())
-      {
-        //get the chokepoints linked to our home region
-        chokepoints= home2->getChokepoints();
-        double min_length=10000;
-        BWTA::Chokepoint* choke=NULL;
-
-        //iterate through all chokepoints and look for the one with the smallest gap (least width)
-        for(std::set<BWTA::Chokepoint*>::iterator c=chokepoints.begin();c!=chokepoints.end();c++)
-        {
-          double length=(*c)->getWidth();
-          if (length<min_length || choke==NULL)
-          {
-            min_length=length;
-            choke=*c;
-          }
-        }
-
-        //order the worker to move to the center of the gap
-        (*i)->rightClick(choke->getCenter());
-        break;
-      }
-    }
-  }
-  if (analyzed2)
-    drawTerrainData();
-
-  if (analysis_just_finished2)
-  {
-    Broodwar->printf("Finished analyzing map.");
-    analysis_just_finished2=false;
-  }
-
-
-  for(std::set<Unit *>::const_iterator a=Broodwar->self()->getUnits().begin();a!=Broodwar->self()->getUnits().end();a++)
-  {
-	  if(!(*a)->getType().isWorker() && (*a)->isIdle())
-	  {
-		 reunite = MoveClosestBaseOrChokePoint((*a),chokepoints);
-		 if(reunite != Position(0,0))
-		 {
-			 reunitePoints.insert(reunite);
-			 (*a)->move(reunite);
-		 }
-	  }
-	  if((*a)->getType().isWorker())
-	  {
-
-	  }
-  }
-  if(WhereToAttack != Position(0,0))
-  {
-	  for(std::set<Position>::const_iterator i=reunitePoints.begin();i != reunitePoints.end();i++)
-	  {
-		  for(std::set<Unit *>::const_iterator a=Broodwar->getUnitsInRadius((*i),150).begin();a!=Broodwar->getUnitsInRadius((*i),150).end();a++)
-		  {
-			  	if(!(*a)->getType().isWorker() && (*a)->isIdle())
-				{
-					(*a)->attack(WhereToAttack);
-				}
-		  }
-	  }
-  }
 }
 
 void PackAndAttack::onSendText(std::string text)
