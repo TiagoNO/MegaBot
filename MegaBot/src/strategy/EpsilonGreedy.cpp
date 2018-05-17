@@ -25,7 +25,8 @@ void EpsilonGreedy::onFrame() {
 		Logging::getInstance()->log(
 			"Selecting behavior (in minute %d)", Broodwar->elapsedTime() / 60
 		);
-		chooseNewBehavior(currentStrategy);
+		MatchData::getInstance()->updatebehaviorValue();
+		this->chooseNewBehavior(currentStrategy);
 		MatchData::getInstance()->registerMyBehaviorName(getCurrentStrategyName().c_str());
 		MatchData::getInstance()->updateframeCrashFile();
 		Logging::getInstance()->log("Updating Crash File");
