@@ -48,6 +48,8 @@ public:
 
 	/** learning rate for score updates (epsilon-greedy meta-strategy) */
 	float alpha;
+
+	float learning_rate;
 	
 	/** rate of exploration for epsilon-greedy */
 	float epsilon;

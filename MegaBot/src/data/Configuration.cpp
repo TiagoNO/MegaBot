@@ -45,6 +45,7 @@ Configuration::Configuration() {
 	enableGUI = true;
 
 	alpha = 0.2f;
+	learning_rate = 0.9;
 	epsilon = 0.15f;
 }
 
