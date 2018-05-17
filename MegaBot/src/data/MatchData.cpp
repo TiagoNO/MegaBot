@@ -198,6 +198,97 @@ MatchData* MatchData::getInstance() {
     return instance;
 }
 
+void MatchData::updatebehaviorValue() {
+	using namespace tinyxml2;
+
+	string bot_name = this->myBehaviorName;
+
+	/* DEBUG
+	ofstream outFile;
+	outFile.open("bwapi-data/write/dbg.txt", ios::out | ios::app);
+	*/
+
+	XMLElement* rootNode;
+	XMLElement* myBehvNode;
+	XMLElement* frameNode;
+	XMLElement* nextFrameNode;
+	XMLElement* queryNode;
+
+	string inputFile = Configuration::getInstance()->enemyInformationInputFile();
+	string outputFile = Configuration::getInstance()->enemyInformationOutputFile();
+
+	//const char* filename = Configuration::getInstance()->readDataFile.c_str();
+
+	tinyxml2::XMLDocument doc;
+	XMLError input_result = doc.LoadFile(outputFile.c_str());
+
+	// if file was not found, ok, we create a node and fill information in it
+	if (input_result == XML_ERROR_FILE_NOT_FOUND) {
+		rootNode = doc.NewElement("scores");
+		doc.InsertFirstChild(rootNode);
+	}
+	// if another error occurred, we're in trouble =/
+	else if (input_result != XML_NO_ERROR) {
+
+		/*Broodwar->printf(
+		"Error while parsing the configuration file '%s'. Error: '%s'",
+		inputFile,
+		doc.ErrorName()
+		);*/
+		logger->log(
+			"Error while parsing the configuration file '%s'. Error: '%s'",
+			inputFile,
+			doc.ErrorName()
+		);
+
+		return;
+	}
+	else { //no error, goes after root node
+		rootNode = doc.FirstChildElement("scores");
+		if (rootNode == NULL) {
+			rootNode = doc.NewElement("scores");
+			doc.InsertFirstChild(rootNode);
+		}
+	}
+
+	frameNode = rootNode->FirstChildElement();
+	while (frameNode != NULL)
+	{
+		if (frameNode->IntAttribute("value") >= Broodwar->getFrameCount() - 4286 && frameNode->IntAttribute("value") <= Broodwar->getFrameCount() + 4286)
+		{
+			break;
+		}
+		frameNode = frameNode->NextSiblingElement();
+	}
+	if (frameNode != NULL && frameNode->NextSiblingElement() != NULL) // there are no next frame nodes
+	{
+		nextFrameNode = frameNode->NextSiblingElement();
+		myBehvNode = frameNode->FirstChildElement(myBehaviorName.c_str());
+		if (myBehvNode == NULL) {
+			float value;
+			float alpha = Configuration::getInstance()->alpha;
+			float learning_rate = Configuration::getInstance()->learning_rate;
+
+			float max_value = -99;
+			float aux_value = 0;
+			XMLElement *aux;
+			aux = nextFrameNode->FirstChildElement();
+			while (aux != NULL) {
+				aux->QueryFloatText(&aux_value);
+				if (max_value < aux_value) {
+					max_value = aux_value;
+				}
+				aux = aux->NextSiblingElement();
+			}
+			myBehvNode->QueryFloatText(&value);
+			value += alpha*(learning_rate*max_value - value);
+			myBehvNode->SetText(value);
+		}
+	}
+	doc.SaveFile(inputFile.c_str());
+	doc.SaveFile(outputFile.c_str());
+}
+
 string MatchData::resultToString(int result) {
     switch (result) {
     case WIN:

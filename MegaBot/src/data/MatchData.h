@@ -86,8 +86,12 @@ public:
 	void registerEnemyBehaviorName(string name);
 
 	// return in what frame the last game crashed
-	int MatchData::getFrameThatCrashed();
+	int getFrameThatCrashed();
 
+	/*update Q-value of that state based on the next states*/
+	void updatebehaviorValue();
+
+	/*write the crashFile*/
 	void updateframeCrashFile();
 
 	/* Writes match result in a file */
